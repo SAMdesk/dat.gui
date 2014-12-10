@@ -19,18 +19,29 @@ define([
   'dat/utils/common'
 ], function(Controller, dom, Color, interpret, common) {
 
-  var ColorController = function(object, property) {
+  var ColorController = function(input) {
 
-    ColorController.superclass.call(this, object, property);
+    //ColorController.superclass.call(this, object, property);
+
+    this.__input = input;
+    this.__value = this.__input.value;
 
     this.__color = new Color(this.getValue());
     this.__temp = new Color(0);
 
     var _this = this;
 
-    this.domElement = document.createElement('div');
+    var alpha_grid = 'url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAAXNSR0IArs4c6QAAAC9JREFUGBljvH///n8GJCAtLY3EY2BgQuFh4VCugPHXr18obnj69CmKRZRbQdAEADT3Cphpg+hIAAAAAElFTkSuQmCC")';
 
-    dom.makeSelectable(this.domElement, false);
+    //this.domElement = document.createElement('div');
+    //
+    //dom.makeSelectable(this.domElement, false);
+
+    this.__swatch = document.createElement('div');
+    this.__swatch.className = 'ui-swatch';
+
+    this.__swatch_container = document.createElement('div');
+    this.__swatch_container.className = 'swatch-container';
 
     this.__selector = document.createElement('div');
     this.__selector.className = 'selector';
@@ -48,9 +59,18 @@ define([
     this.__hue_field = document.createElement('div');
     this.__hue_field.className = 'hue-field';
 
-    this.__input = document.createElement('input');
-    this.__input.type = 'text';
-    this.__input_textShadow = '0 1px 1px ';
+    this.__alpha_knob = document.createElement('div');
+    this.__alpha_knob.className = 'alpha-knob';
+
+    this.__alpha_field = document.createElement('div');
+    this.__alpha_field.className = 'alpha-field';
+
+    this.__alpha_container = document.createElement('div');
+    this.__alpha_container.className = 'alpha-container';
+
+    //this.__input = document.createElement('input');
+    //this.__input.type = 'text';
+    //this.__input_textShadow = '0 1px 1px ';
 
     dom.bind(this.__input, 'keydown', function(e) {
       if (e.keyCode === 13) { // on enter
@@ -63,21 +83,22 @@ define([
     dom.bind(this.__selector, 'mousedown', function(e) {
 
       dom
-        .addClass(this, 'drag')
-        .bind(window, 'mouseup', function(e) {
-          dom.removeClass(_this.__selector, 'drag');
-        });
+          .addClass(this, 'drag')
+          .bind(window, 'mouseup', function(e) {
+            dom.removeClass(_this.__selector, 'drag');
+          });
 
     });
 
     var value_field = document.createElement('div');
 
     common.extend(this.__selector.style, {
-      width: '122px',
-      height: '102px',
+      width: '123px',
+      height: '123px',
       padding: '3px',
       backgroundColor: '#222',
-      boxShadow: '0px 1px 3px rgba(0,0,0,0.3)'
+      boxShadow: '0px 1px 3px rgba(0,0,0,0.3)',
+      display: 'none'
     });
 
     common.extend(this.__field_knob.style, {
@@ -89,12 +110,20 @@ define([
       borderRadius: '12px',
       zIndex: 1
     });
-    
+
     common.extend(this.__hue_knob.style, {
       position: 'absolute',
-      width: '15px',
+      width: '16px',
       height: '2px',
       borderRight: '4px solid #fff',
+      zIndex: 1
+    });
+
+    common.extend(this.__alpha_knob.style, {
+      position: 'absolute',
+      width: '2px',
+      height: '16px',
+      borderBottom: '4px solid #fff',
       zIndex: 1
     });
 
@@ -112,11 +141,11 @@ define([
       height: '100%',
       background: 'none'
     });
-    
+
     linearGradient(value_field, 'top', 'rgba(0,0,0,0)', '#000');
 
     common.extend(this.__hue_field.style, {
-      width: '15px',
+      width: '16px',
       height: '100px',
       display: 'inline-block',
       border: '1px solid #555',
@@ -125,16 +154,42 @@ define([
 
     hueGradient(this.__hue_field);
 
+    common.extend(this.__alpha_container.style, {
+      width: '121px',
+      height: '16px',
+      display: 'inline-block',
+      border: '1px solid #555',
+      marginTop: '1px',
+      cursor: 'ew-resize',
+      backgroundImage: alpha_grid
+    });
+
+    common.extend(this.__alpha_field.style, {
+      width: '100%',
+      height: '100%'
+    });
+
     common.extend(this.__input.style, {
       outline: 'none',
-//      width: '120px',
-      textAlign: 'center',
-//      padding: '4px',
-//      marginBottom: '6px',
-      color: '#fff',
-      border: 0,
-      fontWeight: 'bold',
-      textShadow: this.__input_textShadow + 'rgba(0,0,0,0.7)'
+      border: 0
+    });
+
+    common.extend(this.__swatch_container.style, {
+      width: '18px',
+      height: '18px',
+      backgroundImage: alpha_grid
+    });
+
+    common.extend(this.__swatch.style, {
+      marginTop: '0px'
+    });
+
+    this.__visible = false;
+    dom.bind(this.__swatch, 'click', function(e) {
+      _this.__visible = !_this.__visible;
+      common.extend(_this.__selector.style, {
+        display: _this.__visible ? '' : 'none'
+      });
     });
 
     dom.bind(this.__saturation_field, 'mousedown', fieldDown);
@@ -146,9 +201,14 @@ define([
       dom.bind(window, 'mouseup', unbindH);
     });
 
+    dom.bind(this.__alpha_field, 'mousedown', function(e) {
+      setA(e);
+      dom.bind(window, 'mousemove', setA);
+      dom.bind(window, 'mouseup', unbindA);
+    });
+
     function fieldDown(e) {
       setSV(e);
-      // document.body.style.cursor = 'none';
       dom.bind(window, 'mousemove', setSV);
       dom.bind(window, 'mouseup', unbindSV);
     }
@@ -156,7 +216,6 @@ define([
     function unbindSV() {
       dom.unbind(window, 'mousemove', setSV);
       dom.unbind(window, 'mouseup', unbindSV);
-      // document.body.style.cursor = 'default';
     }
 
     function onBlur() {
@@ -174,14 +233,23 @@ define([
       dom.unbind(window, 'mouseup', unbindH);
     }
 
+    function unbindA() {
+      dom.unbind(window, 'mousemove', setA);
+      dom.unbind(window, 'mouseup', unbindA);
+    }
+
     this.__saturation_field.appendChild(value_field);
     this.__selector.appendChild(this.__field_knob);
     this.__selector.appendChild(this.__saturation_field);
     this.__selector.appendChild(this.__hue_field);
     this.__hue_field.appendChild(this.__hue_knob);
+    this.__selector.appendChild(this.__alpha_container);
+    this.__alpha_container.appendChild(this.__alpha_field);
+    this.__alpha_field.appendChild(this.__alpha_knob);
+    this.__swatch_container.appendChild(this.__swatch);
 
-    this.domElement.appendChild(this.__input);
-    this.domElement.appendChild(this.__selector);
+    this.__input.parentNode.insertBefore(this.__swatch_container, this.__input);
+    this.__input.parentNode.appendChild(this.__selector);
 
     this.updateDisplay();
 
@@ -204,7 +272,6 @@ define([
       _this.__color.s = s;
 
       _this.setValue(_this.__color.toOriginal());
-
 
       return false;
 
@@ -229,6 +296,25 @@ define([
 
     }
 
+    function setA(e) {
+
+      e.preventDefault();
+
+      var s = dom.getWidth(_this.__alpha_field);
+      var o = dom.getOffset(_this.__alpha_field);
+      var w = (e.clientX - o.left + document.body.scrollLeft) / s;
+
+      if (w > 1) w = 1;
+      else if (w < 0) w = 0;
+
+      _this.__color.a = w.toFixed(2);
+
+      _this.setValue(_this.__color.toOriginal());
+
+      return false;
+
+    }
+
   };
 
   ColorController.superclass = Controller;
@@ -239,6 +325,15 @@ define([
       Controller.prototype,
 
       {
+
+        getValue: function() {
+          return this.__value;
+        },
+
+        setValue: function(value) {
+          this.__value = value;
+          this.updateDisplay();
+        },
 
         updateDisplay: function() {
 
@@ -269,29 +364,35 @@ define([
 
           common.extend(this.__temp.__state, this.__color.__state);
 
+          this.__temp.a = 0;
+          var x = this.__temp.toString();
+
           this.__temp.a = 1;
+          var y = this.__temp.toString();
+
+          linearGradient(this.__alpha_field, 'left', x, y);
+
+          var a = common.isUndefined(this.__color.a) ? 1 : this.__color.a;
+          this.__alpha_knob.style.marginLeft = (a * 121) - 1 + 'px';
 
           var flip = (this.__color.v < .5 || this.__color.s > .5) ? 255 : 0;
-          var _flip = 255 - flip;
 
           common.extend(this.__field_knob.style, {
-            marginLeft: 100 * this.__color.s - 7 + 'px',
-            marginTop: 100 * (1 - this.__color.v) - 7 + 'px',
+            marginLeft: 100 * this.__temp.s - 7 + 'px',
+            marginTop: 100 * (1 - this.__temp.v) - 7 + 'px',
             backgroundColor: this.__temp.toString(),
             border: this.__field_knob_border + 'rgb(' + flip + ',' + flip + ',' + flip +')'
           });
 
-          this.__hue_knob.style.marginTop = (1 - this.__color.h / 360) * 100 + 'px'
+          this.__hue_knob.style.marginTop = ((1 - this.__color.h / 360) * 100) - 1 + 'px';
 
           this.__temp.s = 1;
           this.__temp.v = 1;
 
           linearGradient(this.__saturation_field, 'left', '#fff', this.__temp.toString());
 
-          common.extend(this.__input.style, {
-            backgroundColor: this.__input.value = this.__color.toString(),
-            color: 'rgb(' + flip + ',' + flip + ',' + flip +')',
-            textShadow: this.__input_textShadow + 'rgba(' + _flip + ',' + _flip + ',' + _flip +',.7)'
+          common.extend(this.__swatch.style, {
+            backgroundColor: this.__input.value = this.__color.toString()
           });
 
         }
