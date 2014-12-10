@@ -259,8 +259,9 @@ define([
 
       var w = dom.getWidth(_this.__saturation_field);
       var o = dom.getOffset(_this.__saturation_field);
-      var s = (e.clientX - o.left + document.body.scrollLeft) / w;
-      var v = 1 - (e.clientY - o.top + document.body.scrollTop) / w;
+      var scroll = getScroll(_this.__saturation_field);
+      var s = (e.clientX - o.left + scroll.left) / w;
+      var v = 1 - (e.clientY - o.top + scroll.top) / w;
 
       if (v > 1) v = 1;
       else if (v < 0) v = 0;
@@ -283,7 +284,8 @@ define([
 
       var s = dom.getHeight(_this.__hue_field);
       var o = dom.getOffset(_this.__hue_field);
-      var h = 1 - (e.clientY - o.top + document.body.scrollTop) / s;
+      var scroll = getScroll(_this.__hue_field);
+      var h = 1 - (e.clientY - o.top + scroll.top) / s;
 
       if (h > 1) h = 1;
       else if (h < 0) h = 0;
@@ -302,7 +304,8 @@ define([
 
       var s = dom.getWidth(_this.__alpha_field);
       var o = dom.getOffset(_this.__alpha_field);
-      var w = (e.clientX - o.left + document.body.scrollLeft) / s;
+      var scroll = getScroll(_this.__alpha_field);
+      var w = (e.clientX - o.left + scroll.left) / s;
 
       if (w > 1) w = 1;
       else if (w < 0) w = 0;
@@ -312,6 +315,17 @@ define([
       _this.setValue(_this.__color.toOriginal());
 
       return false;
+
+    }
+
+    function getScroll(el) {
+
+      var scroll = { top: el.scrollTop, left: el.scrollLeft };
+      while(el = el.parentNode) {
+        scroll.top += (el.scrollTop || 0);
+        scroll.left += (el.scrollLeft || 0);
+      }
+      return scroll;
 
     }
 
@@ -332,7 +346,11 @@ define([
 
         setValue: function(value) {
           this.__value = value;
+          if (this.__onChange) {
+            this.__onChange.call(this, value);
+          }
           this.updateDisplay();
+          return this;
         },
 
         updateDisplay: function() {
