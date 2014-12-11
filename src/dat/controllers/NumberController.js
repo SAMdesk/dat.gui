@@ -35,6 +35,10 @@ define([
 
     NumberController.superclass.call(this, name, value, 'number');
 
+    if (typeof this.getValue() !== 'number') {
+      throw 'Provided value is not a number';
+    }
+
     var _this = this;
 
     params = params || {};

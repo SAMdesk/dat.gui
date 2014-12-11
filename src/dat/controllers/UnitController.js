@@ -57,7 +57,7 @@ define([
      *
      * @member dat.controllers
      */
-    var UnitController = function(name, value, params) {
+    var UnitController = function(name, value) {
 
         UnitController.superclass.call(this, name, value, 'unit');
 

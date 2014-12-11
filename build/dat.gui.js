@@ -1986,6 +1986,10 @@ dat.controllers.NumberController = (function (Controller, dom, common) {
 
     NumberController.superclass.call(this, name, value, 'number');
 
+    if (typeof this.getValue() !== 'number') {
+      throw 'Provided value is not a number';
+    }
+
     var _this = this;
 
     params = params || {};
@@ -2341,7 +2345,7 @@ dat.controllers.UnitController = (function (Controller, dom, common) {
      *
      * @member dat.controllers
      */
-    var UnitController = function(name, value, params) {
+    var UnitController = function(name, value) {
 
         UnitController.superclass.call(this, name, value, 'unit');
 
