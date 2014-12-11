@@ -176,7 +176,7 @@ define([
         }
     );
 
-    if (!common.isNaN(result.h)) {
+    if (!isNaN(result.h)) {
       color.__state.h = result.h;
     } else if (common.isUndefined(color.__state.h)) {
       color.__state.h = 0;

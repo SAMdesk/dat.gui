@@ -89,7 +89,14 @@ define([
       }
             
     },
-    
+
+    contains: function(arr, obj) {
+      for (var key in arr) {
+        if (arr[key] == obj) return true;
+      }
+      return false;
+    },
+
     defer: function(fnc) {
       setTimeout(fnc, 0);
     },
@@ -106,11 +113,7 @@ define([
     isNull: function(obj) {
       return obj === null;
     },
-    
-    isNaN: function(obj) {
-      return obj !== obj;
-    },
-    
+
     isArray: Array.isArray || function(obj) {
       return obj.constructor === Array;
     },

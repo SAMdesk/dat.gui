@@ -29,27 +29,6 @@ dat.dom = dat.dom || {};
 /** @namespace */
 dat.color = dat.color || {};
 
-dat.utils.css = (function () {
-  return {
-    load: function (url, doc) {
-      doc = doc || document;
-      var link = doc.createElement('link');
-      link.type = 'text/css';
-      link.rel = 'stylesheet';
-      link.href = url;
-      doc.getElementsByTagName('head')[0].appendChild(link);
-    },
-    inject: function(css, doc) {
-      doc = doc || document;
-      var injected = document.createElement('style');
-      injected.type = 'text/css';
-      injected.innerHTML = css;
-      doc.getElementsByTagName('head')[0].appendChild(injected);
-    }
-  }
-})();
-
-
 dat.utils.common = (function () {
   
   var ARR_EACH = Array.prototype.forEach;
@@ -127,7 +106,14 @@ dat.utils.common = (function () {
       }
             
     },
-    
+
+    contains: function(arr, obj) {
+      for (var key in arr) {
+        if (arr[key] == obj) return true;
+      }
+      return false;
+    },
+
     defer: function(fnc) {
       setTimeout(fnc, 0);
     },
@@ -144,11 +130,7 @@ dat.utils.common = (function () {
     isNull: function(obj) {
       return obj === null;
     },
-    
-    isNaN: function(obj) {
-      return obj !== obj;
-    },
-    
+
     isArray: Array.isArray || function(obj) {
       return obj.constructor === Array;
     },
@@ -188,18 +170,23 @@ dat.controllers.Controller = (function (common) {
    *
    * @member dat.controllers
    */
-  var Controller = function(property, value) {
+  var Controller = function(name, value, type) {
 
     /**
      * Keep track of the property name
      */
-    this.__property = property;
+    this.__name = name;
 
     /**
      * Keep track of the initial and current Controller values
      */
     this.__value = value;
     this.__initialValue = value;
+
+    /**
+     * Keep track of the type of Controller for style purposes
+     */
+    this.__type = type;
 
     /**
      * Those who extend this class will put their DOM elements in here.
@@ -258,23 +245,35 @@ dat.controllers.Controller = (function (common) {
         },
 
         /**
-         * Gets the value of <code>__property</code>
+         * Gets the value of <code>__name</code>
          *
-         * @returns {Object} The current value of <code>__property</code>
+         * @returns {Object} The current value of <code>__name</code>
          */
-        getProperty: function() {
-          return this.__property;
+        getName: function() {
+          return this.__name;
+        },
+
+        /**
+         * Change the value of <code>__initialValue</code>
+         *
+         * @param {Object} value The new value of <code>__initialValue</code>
+         */
+        setInitialValue: function(value) {
+          this.__initialValue = value;
+          return this;
         },
 
         /**
          * Change the value of <code>__value</code>
          *
-         * @param {Object} newValue The new value of <code>object[property]</code>
+         * @param {Object} value The new value of <code>__value</code>
          */
         setValue: function(value) {
-          this.__value = value;
-          if (this.__onChange) {
-            this.__onChange.call(this, value);
+          if (value != this.__value) {
+            this.__value = value;
+            if (this.__onChange) {
+              this.__onChange.call(this, value);
+            }
           }
           this.updateDisplay();
           return this;
@@ -287,6 +286,15 @@ dat.controllers.Controller = (function (common) {
          */
         getValue: function() {
           return this.__value;
+        },
+
+        /**
+         * Gets the value of <code>__type</code>
+         *
+         * @returns {String} The current value of <code>__type</code>
+         */
+        getType: function() {
+          return this.__type;
         },
 
         /**
@@ -587,138 +595,6 @@ dat.dom.dom = (function (common) {
   return dom;
 
 })(dat.utils.common);
-
-
-dat.controllers.NumberController = (function (Controller, common) {
-
-  /**
-   * @class Represents a given property of an object that is a number.
-   *
-   * @extends dat.controllers.Controller
-   *
-   * @param {Object} object The object to be manipulated
-   * @param {string} property The name of the property to be manipulated
-   * @param {Object} [params] Optional parameters
-   * @param {Number} [params.min] Minimum allowed value
-   * @param {Number} [params.max] Maximum allowed value
-   * @param {Number} [params.step] Increment by which to change value
-   *
-   * @member dat.controllers
-   */
-  var NumberController = function(object, property, params) {
-
-    NumberController.superclass.call(this, object, property);
-
-    params = params || {};
-
-    this.__min = params.min;
-    this.__max = params.max;
-    this.__step = params.step;
-
-    if (common.isUndefined(this.__step)) {
-
-      if (this.initialValue == 0) {
-        this.__impliedStep = 1; // What are we, psychics?
-      } else {
-        // Hey Doug, check this out.
-        this.__impliedStep = Math.pow(10, Math.floor(Math.log(this.initialValue)/Math.LN10))/10;
-      }
-
-    } else {
-
-    	this.__impliedStep = this.__step;
-
-    }
-
-    this.__precision = numDecimals(this.__impliedStep);
-
-
-  };
-
-  NumberController.superclass = Controller;
-
-  common.extend(
-
-      NumberController.prototype,
-      Controller.prototype,
-
-      /** @lends dat.controllers.NumberController.prototype */
-      {
-
-        setValue: function(v) {
-
-          if (this.__min !== undefined && v < this.__min) {
-            v = this.__min;
-          } else if (this.__max !== undefined && v > this.__max) {
-            v = this.__max;
-          }
-
-          if (this.__step !== undefined && v % this.__step != 0) {
-            v = Math.round(v / this.__step) * this.__step;
-          }
-
-          return NumberController.superclass.prototype.setValue.call(this, v);
-
-        },
-
-        /**
-         * Specify a minimum value for <code>object[property]</code>.
-         *
-         * @param {Number} minValue The minimum value for
-         * <code>object[property]</code>
-         * @returns {dat.controllers.NumberController} this
-         */
-        min: function(v) {
-          this.__min = v;
-          return this;
-        },
-
-        /**
-         * Specify a maximum value for <code>object[property]</code>.
-         *
-         * @param {Number} maxValue The maximum value for
-         * <code>object[property]</code>
-         * @returns {dat.controllers.NumberController} this
-         */
-        max: function(v) {
-          this.__max = v;
-          return this;
-        },
-
-        /**
-         * Specify a step value that dat.controllers.NumberController
-         * increments by.
-         *
-         * @param {Number} stepValue The step value for
-         * dat.controllers.NumberController
-         * @default if minimum and maximum specified increment is 1% of the
-         * difference otherwise stepValue is 1
-         * @returns {dat.controllers.NumberController} this
-         */
-        step: function(v) {
-          this.__step = v;
-          this.__impliedStep = v;
-          this.__precision = numDecimals(v);
-          return this;
-        }
-
-      }
-
-  );
-
-  function numDecimals(x) {
-    x = x.toString();
-    if (x.indexOf('.') > -1) {
-      return x.length - x.indexOf('.') - 1;
-    } else {
-      return 0;
-    }
-  }
-
-  return NumberController;
-
-})(dat.controllers.Controller,
-dat.utils.common);
 
 
 dat.color.toString = (function (common) {
@@ -1072,9 +948,9 @@ dat.color.interpret = (function (toString, common) {
 dat.utils.common);
 
 
-dat.GUI = dat.gui.GUI = (function (css, styleSheet, Controller, BooleanController, FunctionController, NumberControllerBox, NumberControllerSlider, OptionController, ColorController, dom, common) {
+dat.GUI = dat.gui.GUI = (function (css, styleSheet, Controller, BooleanController, ColorController, NumberController, OptionController, StringController, UnitController, dom, common) {
 
-  css.inject(styleSheet);
+  //css.inject(styleSheet);
 
   /** Outer-most className for GUI's */
   var CSS_NAMESPACE = 'dg';
@@ -1292,7 +1168,7 @@ dat.GUI = dat.gui.GUI = (function (css, styleSheet, Controller, BooleanControlle
 
     var name = document.createElement('span');
     dom.addClass(name, 'property-name');
-    name.innerHTML = controller.getProperty();
+    name.innerHTML = controller.getName();
 
     var container = document.createElement('div');
     container.appendChild(name);
@@ -1301,7 +1177,7 @@ dat.GUI = dat.gui.GUI = (function (css, styleSheet, Controller, BooleanControlle
     var li = addRow(gui, container);
 
     dom.addClass(li, GUI.CLASS_CONTROLLER_ROW);
-    dom.addClass(li, typeof controller.getValue());
+    dom.addClass(li, controller.getType());
 
     gui.__controllers.push(controller);
 
@@ -1325,7 +1201,25 @@ dat.GUI = dat.gui.GUI = (function (css, styleSheet, Controller, BooleanControlle
 
   return GUI;
 
-})(dat.utils.css,
+})(dat.utils.css = (function () {
+  return {
+    load: function (url, doc) {
+      doc = doc || document;
+      var link = doc.createElement('link');
+      link.type = 'text/css';
+      link.rel = 'stylesheet';
+      link.href = url;
+      doc.getElementsByTagName('head')[0].appendChild(link);
+    },
+    inject: function(css, doc) {
+      doc = doc || document;
+      var injected = document.createElement('style');
+      injected.type = 'text/css';
+      injected.innerHTML = css;
+      doc.getElementsByTagName('head')[0].appendChild(injected);
+    }
+  }
+})(),
 ".dg {\n  /** Clear list styles */\n  /* Auto-place container */\n  /* Auto-placed GUI's */\n  /* Line items that don't contain folders. */\n  /** Folder names */\n  /** Hides closed items */\n  /** Controller row */\n  /** Name-half (left) */\n  /** Controller-half (right) */\n  /** Controller placement */\n  /** Shorter number boxes when slider is present. */\n  /** Ensure the entire boolean and function row shows a hand */ }\n  .dg ul {\n    list-style: none;\n    margin: 0;\n    padding: 0;\n    width: 100%;\n    clear: both; }\n  .dg.ac {\n    position: fixed;\n    top: 0;\n    left: 0;\n    right: 0;\n    height: 0;\n    z-index: 0; }\n  .dg:not(.ac) .main {\n    /** Exclude mains in ac so that we don't hide close button */\n    overflow: hidden; }\n  .dg.main {\n    -webkit-transition: opacity 0.1s linear;\n    -o-transition: opacity 0.1s linear;\n    -moz-transition: opacity 0.1s linear;\n    transition: opacity 0.1s linear; }\n    .dg.main.taller-than-window {\n      overflow-y: auto; }\n      .dg.main.taller-than-window .close-button {\n        opacity: 1;\n        /* TODO, these are style notes */\n        margin-top: -1px;\n        border-top: 1px solid #2c2c2c; }\n    .dg.main ul.closed .close-button {\n      opacity: 1 !important; }\n    .dg.main:hover .close-button,\n    .dg.main .close-button.drag {\n      opacity: 1; }\n    .dg.main .close-button {\n      /*opacity: 0;*/\n      -webkit-transition: opacity 0.1s linear;\n      -o-transition: opacity 0.1s linear;\n      -moz-transition: opacity 0.1s linear;\n      transition: opacity 0.1s linear;\n      border: 0;\n      position: absolute;\n      line-height: 19px;\n      height: 20px;\n      /* TODO, these are style notes */\n      cursor: pointer;\n      text-align: center;\n      background-color: #000; }\n      .dg.main .close-button:hover {\n        background-color: #111; }\n  .dg.a {\n    float: right;\n    margin-right: 15px;\n    overflow-x: hidden; }\n    .dg.a.has-save > ul {\n      margin-top: 27px; }\n      .dg.a.has-save > ul.closed {\n        margin-top: 0; }\n    .dg.a .save-row {\n      position: fixed;\n      top: 0;\n      z-index: 1002; }\n  .dg li {\n    -webkit-transition: height 0.1s ease-out;\n    -o-transition: height 0.1s ease-out;\n    -moz-transition: height 0.1s ease-out;\n    transition: height 0.1s ease-out; }\n  .dg li:not(.folder) {\n    cursor: auto;\n    height: 27px;\n    line-height: 27px;\n    overflow: hidden;\n    padding: 0 4px 0 5px; }\n  .dg li.folder {\n    padding: 0;\n    border-left: 4px solid rgba(0, 0, 0, 0); }\n  .dg li.title {\n    cursor: pointer;\n    margin-left: -4px; }\n  .dg .closed li:not(.title),\n  .dg .closed ul li,\n  .dg .closed ul li > * {\n    height: 0;\n    overflow: hidden;\n    border: 0; }\n  .dg .cr {\n    clear: both;\n    padding-left: 3px;\n    height: 27px; }\n  .dg .property-name {\n    cursor: default;\n    float: left;\n    clear: left;\n    width: 40%;\n    overflow: hidden;\n    text-overflow: ellipsis; }\n  .dg .c {\n    float: left;\n    width: 60%; }\n  .dg .c input[type=text] {\n    border: 0;\n    margin-top: 4px;\n    padding: 3px;\n    width: 100%;\n    float: right; }\n  .dg .has-slider input[type=text] {\n    width: 30%;\n    /*display: none;*/\n    margin-left: 0; }\n  .dg .slider {\n    float: left;\n    width: 66%;\n    margin-left: -5px;\n    margin-right: 0;\n    height: 19px;\n    margin-top: 4px; }\n  .dg .slider-fg {\n    height: 100%; }\n  .dg .c input[type=checkbox] {\n    margin-top: 9px; }\n  .dg .c select {\n    margin-top: 5px; }\n  .dg .cr.function,\n  .dg .cr.function .property-name,\n  .dg .cr.function *,\n  .dg .cr.boolean,\n  .dg .cr.boolean * {\n    cursor: pointer; }\n  .dg .selector {\n    display: none;\n    position: absolute;\n    margin-left: -9px;\n    margin-top: 23px;\n    z-index: 10; }\n  .dg .c:hover .selector,\n  .dg .selector.drag {\n    display: block; }\n  .dg li.save-row {\n    padding: 0; }\n    .dg li.save-row .button {\n      display: inline-block;\n      padding: 0px 6px; }\n  .dg.dialogue {\n    background-color: #222;\n    width: 460px;\n    padding: 15px;\n    font-size: 13px;\n    line-height: 15px; }\n\n/* TODO Separate style and structure */\n#dg-new-constructor {\n  padding: 10px;\n  color: #222;\n  font-family: Monaco, monospace;\n  font-size: 10px;\n  border: 0;\n  resize: none;\n  box-shadow: inset 1px 1px 1px #888;\n  word-wrap: break-word;\n  margin: 12px 0;\n  display: block;\n  width: 440px;\n  overflow-y: scroll;\n  height: 100px;\n  position: relative; }\n\n#dg-local-explain {\n  display: none;\n  font-size: 11px;\n  line-height: 17px;\n  border-radius: 3px;\n  background-color: #333;\n  padding: 8px;\n  margin-top: 10px; }\n  #dg-local-explain code {\n    font-size: 10px; }\n\n#dat-gui-save-locally {\n  display: none; }\n\n/** Main type */\n.dg {\n  color: #eee;\n  font: 11px 'Lucida Grande', sans-serif;\n  text-shadow: 0 -1px 0 #111;\n  /** Auto place */\n  /* Controller row, <li> */\n  /** Controllers */ }\n  .dg.main {\n    /** Scrollbar */ }\n    .dg.main::-webkit-scrollbar {\n      width: 5px;\n      background: #1a1a1a; }\n    .dg.main::-webkit-scrollbar-corner {\n      height: 0;\n      display: none; }\n    .dg.main::-webkit-scrollbar-thumb {\n      border-radius: 5px;\n      background: #676767; }\n  .dg li:not(.folder) {\n    background: #1a1a1a;\n    border-bottom: 1px solid #2c2c2c; }\n  .dg li.save-row {\n    line-height: 25px;\n    background: #dad5cb;\n    border: 0; }\n    .dg li.save-row select {\n      margin-left: 5px;\n      width: 108px; }\n    .dg li.save-row .button {\n      margin-left: 5px;\n      margin-top: 1px;\n      border-radius: 2px;\n      font-size: 9px;\n      line-height: 7px;\n      padding: 4px 4px 5px 4px;\n      background: #c5bdad;\n      color: #fff;\n      text-shadow: 0 1px 0 #b0a58f;\n      box-shadow: 0 -1px 0 #b0a58f;\n      cursor: pointer; }\n      .dg li.save-row .button.gears {\n        background: #c5bdad url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAANCAYAAAB/9ZQ7AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAQJJREFUeNpiYKAU/P//PwGIC/ApCABiBSAW+I8AClAcgKxQ4T9hoMAEUrxx2QSGN6+egDX+/vWT4e7N82AMYoPAx/evwWoYoSYbACX2s7KxCxzcsezDh3evFoDEBYTEEqycggWAzA9AuUSQQgeYPa9fPv6/YWm/Acx5IPb7ty/fw+QZblw67vDs8R0YHyQhgObx+yAJkBqmG5dPPDh1aPOGR/eugW0G4vlIoTIfyFcA+QekhhHJhPdQxbiAIguMBTQZrPD7108M6roWYDFQiIAAv6Aow/1bFwXgis+f2LUAynwoIaNcz8XNx3Dl7MEJUDGQpx9gtQ8YCueB+D26OECAAQDadt7e46D42QAAAABJRU5ErkJggg==) 2px 1px no-repeat;\n        height: 7px;\n        width: 8px; }\n      .dg li.save-row .button:hover {\n        background-color: #bab19e;\n        box-shadow: 0 -1px 0 #b0a58f; }\n  .dg li.folder {\n    border-bottom: 0; }\n  .dg li.title {\n    padding-left: 16px;\n    background: black url(data:image/gif;base64,R0lGODlhBQAFAJEAAP////Pz8////////yH5BAEAAAIALAAAAAAFAAUAAAIIlI+hKgFxoCgAOw==) 6px 10px no-repeat;\n    cursor: pointer;\n    border-bottom: 1px solid rgba(255, 255, 255, 0.2); }\n  .dg .closed li.title {\n    background-image: url(data:image/gif;base64,R0lGODlhBQAFAJEAAP////Pz8////////yH5BAEAAAIALAAAAAAFAAUAAAIIlGIWqMCbWAEAOw==); }\n  .dg .cr.boolean {\n    border-left: 3px solid #806787; }\n  .dg .cr.function {\n    border-left: 3px solid #e61d5f; }\n  .dg .cr.number {\n    border-left: 3px solid #2fa1d6; }\n    .dg .cr.number input[type=text] {\n      color: #2fa1d6; }\n  .dg .cr.string {\n    border-left: 3px solid #1ed36f; }\n    .dg .cr.string input[type=text] {\n      color: #1ed36f; }\n  .dg .cr.function:hover, .dg .cr.boolean:hover {\n    background: #111; }\n  .dg .c input[type=text] {\n    background: #303030;\n    outline: none; }\n    .dg .c input[type=text]:hover {\n      background: #3c3c3c; }\n    .dg .c input[type=text]:focus {\n      background: #494949;\n      color: #fff; }\n  .dg .c .slider {\n    background: #303030;\n    cursor: ew-resize; }\n  .dg .c .slider-fg {\n    background: #2fa1d6; }\n  .dg .c .slider:hover {\n    background: #3c3c3c; }\n    .dg .c .slider:hover .slider-fg {\n      background: #44abda; }\n",
 dat.controllers.Controller,
 dat.controllers.BooleanController = (function (Controller, dom, common) {
@@ -1339,9 +1233,9 @@ dat.controllers.BooleanController = (function (Controller, dom, common) {
    *
    * @member dat.controllers
    */
-  var BooleanController = function(object, property) {
+  var BooleanController = function(name, value) {
 
-    BooleanController.superclass.call(this, object, property);
+    BooleanController.superclass.call(this, name, value, 'boolean');
 
     var _this = this;
     this.__prev = this.getValue();
@@ -1352,7 +1246,7 @@ dat.controllers.BooleanController = (function (Controller, dom, common) {
 
     dom.bind(this.__checkbox, 'change', onChange, false);
 
-    this.domElement.appendChild(this.__checkbox);
+    this.el.appendChild(this.__checkbox);
 
     // Match original value
     this.updateDisplay();
@@ -1404,388 +1298,11 @@ dat.controllers.BooleanController = (function (Controller, dom, common) {
 })(dat.controllers.Controller,
 dat.dom.dom,
 dat.utils.common),
-dat.controllers.FunctionController = (function (Controller, dom, common) {
-
-  /**
-   * @class Provides a GUI interface to fire a specified method, a property of an object.
-   *
-   * @extends dat.controllers.Controller
-   *
-   * @param {Object} object The object to be manipulated
-   * @param {string} property The name of the property to be manipulated
-   *
-   * @member dat.controllers
-   */
-  var FunctionController = function(object, property, text) {
-
-    FunctionController.superclass.call(this, object, property);
-
-    var _this = this;
-
-    this.__button = document.createElement('div');
-    this.__button.innerHTML = text === undefined ? 'Fire' : text;
-    dom.bind(this.__button, 'click', function(e) {
-      e.preventDefault();
-      _this.fire();
-      return false;
-    });
-
-    dom.addClass(this.__button, 'button');
-
-    this.domElement.appendChild(this.__button);
-
-
-  };
-
-  FunctionController.superclass = Controller;
-
-  common.extend(
-
-      FunctionController.prototype,
-      Controller.prototype,
-      {
-        
-        fire: function() {
-          if (this.__onChange) {
-            this.__onChange.call(this);
-          }
-          this.getValue().call(this.object);
-          if (this.__onFinishChange) {
-            this.__onFinishChange.call(this, this.getValue());
-          }
-        }
-      }
-
-  );
-
-  return FunctionController;
-
-})(dat.controllers.Controller,
-dat.dom.dom,
-dat.utils.common),
-dat.controllers.NumberControllerBox = (function (NumberController, dom, common) {
-
-  /**
-   * @class Represents a given property of an object that is a number and
-   * provides an input element with which to manipulate it.
-   *
-   * @extends dat.controllers.Controller
-   * @extends dat.controllers.NumberController
-   *
-   * @param {Object} object The object to be manipulated
-   * @param {string} property The name of the property to be manipulated
-   * @param {Object} [params] Optional parameters
-   * @param {Number} [params.min] Minimum allowed value
-   * @param {Number} [params.max] Maximum allowed value
-   * @param {Number} [params.step] Increment by which to change value
-   *
-   * @member dat.controllers
-   */
-  var NumberControllerBox = function(object, property, params) {
-
-    this.__truncationSuspended = false;
-
-    NumberControllerBox.superclass.call(this, object, property, params);
-
-    var _this = this;
-
-    /**
-     * {Number} Previous mouse y position
-     * @ignore
-     */
-    var prev_y;
-
-    this.__input = document.createElement('input');
-    this.__input.setAttribute('type', 'text');
-
-    // Makes it so manually specified values are not truncated.
-
-    dom.bind(this.__input, 'change', onChange);
-    dom.bind(this.__input, 'blur', onBlur);
-    dom.bind(this.__input, 'mousedown', onMouseDown);
-    dom.bind(this.__input, 'keydown', function(e) {
-
-      // When pressing entire, you can be as precise as you want.
-      if (e.keyCode === 13) {
-        _this.__truncationSuspended = true;
-        this.blur();
-        _this.__truncationSuspended = false;
-      }
-
-    });
-
-    function onChange() {
-      var attempted = parseFloat(_this.__input.value);
-      if (!common.isNaN(attempted)) _this.setValue(attempted);
-    }
-
-    function onBlur() {
-      onChange();
-      if (_this.__onFinishChange) {
-        _this.__onFinishChange.call(_this, _this.getValue());
-      }
-    }
-
-    function onMouseDown(e) {
-      dom.bind(window, 'mousemove', onMouseDrag);
-      dom.bind(window, 'mouseup', onMouseUp);
-      prev_y = e.clientY;
-    }
-
-    function onMouseDrag(e) {
-
-      var diff = prev_y - e.clientY;
-      _this.setValue(_this.getValue() + diff * _this.__impliedStep);
-
-      prev_y = e.clientY;
-
-    }
-
-    function onMouseUp() {
-      dom.unbind(window, 'mousemove', onMouseDrag);
-      dom.unbind(window, 'mouseup', onMouseUp);
-    }
-
-    this.updateDisplay();
-
-    this.domElement.appendChild(this.__input);
-
-  };
-
-  NumberControllerBox.superclass = NumberController;
-
-  common.extend(
-
-      NumberControllerBox.prototype,
-      NumberController.prototype,
-
-      {
-
-        updateDisplay: function() {
-
-          this.__input.value = this.__truncationSuspended ? this.getValue() : roundToDecimal(this.getValue(), this.__precision);
-          return NumberControllerBox.superclass.prototype.updateDisplay.call(this);
-        }
-
-      }
-
-  );
-
-  function roundToDecimal(value, decimals) {
-    var tenTo = Math.pow(10, decimals);
-    return Math.round(value * tenTo) / tenTo;
-  }
-
-  return NumberControllerBox;
-
-})(dat.controllers.NumberController,
-dat.dom.dom,
-dat.utils.common),
-dat.controllers.NumberControllerSlider = (function (NumberController, dom, css, common, styleSheet) {
-
-  /**
-   * @class Represents a given property of an object that is a number, contains
-   * a minimum and maximum, and provides a slider element with which to
-   * manipulate it. It should be noted that the slider element is made up of
-   * <code>&lt;div&gt;</code> tags, <strong>not</strong> the html5
-   * <code>&lt;slider&gt;</code> element.
-   *
-   * @extends dat.controllers.Controller
-   * @extends dat.controllers.NumberController
-   * 
-   * @param {Object} object The object to be manipulated
-   * @param {string} property The name of the property to be manipulated
-   * @param {Number} minValue Minimum allowed value
-   * @param {Number} maxValue Maximum allowed value
-   * @param {Number} stepValue Increment by which to change value
-   *
-   * @member dat.controllers
-   */
-  var NumberControllerSlider = function(object, property, min, max, step) {
-
-    NumberControllerSlider.superclass.call(this, object, property, { min: min, max: max, step: step });
-
-    var _this = this;
-
-    this.__background = document.createElement('div');
-    this.__foreground = document.createElement('div');
-    
-
-
-    dom.bind(this.__background, 'mousedown', onMouseDown);
-    
-    dom.addClass(this.__background, 'slider');
-    dom.addClass(this.__foreground, 'slider-fg');
-
-    function onMouseDown(e) {
-
-      dom.bind(window, 'mousemove', onMouseDrag);
-      dom.bind(window, 'mouseup', onMouseUp);
-
-      onMouseDrag(e);
-    }
-
-    function onMouseDrag(e) {
-
-      e.preventDefault();
-
-      var offset = dom.getOffset(_this.__background);
-      var width = dom.getWidth(_this.__background);
-      
-      _this.setValue(
-      	map(e.clientX, offset.left, offset.left + width, _this.__min, _this.__max)
-      );
-
-      return false;
-
-    }
-
-    function onMouseUp() {
-      dom.unbind(window, 'mousemove', onMouseDrag);
-      dom.unbind(window, 'mouseup', onMouseUp);
-      if (_this.__onFinishChange) {
-        _this.__onFinishChange.call(_this, _this.getValue());
-      }
-    }
-
-    this.updateDisplay();
-
-    this.__background.appendChild(this.__foreground);
-    this.domElement.appendChild(this.__background);
-
-  };
-
-  NumberControllerSlider.superclass = NumberController;
-
-  /**
-   * Injects default stylesheet for slider elements.
-   */
-  NumberControllerSlider.useDefaultStyles = function() {
-    css.inject(styleSheet);
-  };
-
-  common.extend(
-
-      NumberControllerSlider.prototype,
-      NumberController.prototype,
-
-      {
-
-        updateDisplay: function() {
-          var pct = (this.getValue() - this.__min)/(this.__max - this.__min);
-          this.__foreground.style.width = pct*100+'%';
-          return NumberControllerSlider.superclass.prototype.updateDisplay.call(this);
-        }
-
-      }
-
-
-
-  );
-
-	function map(v, i1, i2, o1, o2) {
-		return o1 + (o2 - o1) * ((v - i1) / (i2 - i1));
-	}
-
-  return NumberControllerSlider;
-  
-})(dat.controllers.NumberController,
-dat.dom.dom,
-dat.utils.css,
-dat.utils.common,
-"/**\n * dat-gui JavaScript Controller Library\n * http://code.google.com/p/dat-gui\n *\n * Copyright 2011 Data Arts Team, Google Creative Lab\n *\n * Licensed under the Apache License, Version 2.0 (the \"License\");\n * you may not use this file except in compliance with the License.\n * You may obtain a copy of the License at\n *\n * http://www.apache.org/licenses/LICENSE-2.0\n */\n\n.slider {\n  box-shadow: inset 0 2px 4px rgba(0,0,0,0.15);\n  height: 1em;\n  border-radius: 1em;\n  background-color: #eee;\n  padding: 0 0.5em;\n  overflow: hidden;\n}\n\n.slider-fg {\n  padding: 1px 0 2px 0;\n  background-color: #aaa;\n  height: 1em;\n  margin-left: -0.5em;\n  padding-right: 0.5em;\n  border-radius: 1em 0 0 1em;\n}\n\n.slider-fg:after {\n  display: inline-block;\n  border-radius: 1em;\n  background-color: #fff;\n  border:  1px solid #aaa;\n  content: '';\n  float: right;\n  margin-right: -1em;\n  margin-top: -1px;\n  height: 0.9em;\n  width: 0.9em;\n}"),
-dat.controllers.OptionController = (function (Controller, dom, common) {
-
-  /**
-   * @class Provides a select input to alter the property of an object, using a
-   * list of accepted values.
-   *
-   * @extends dat.controllers.Controller
-   *
-   * @param {Object} object The object to be manipulated
-   * @param {string} property The name of the property to be manipulated
-   * @param {Object|string[]} options A map of labels to acceptable values, or
-   * a list of acceptable string values.
-   *
-   * @member dat.controllers
-   */
-  var OptionController = function(object, property, options) {
-
-    OptionController.superclass.call(this, object, property);
-
-    var _this = this;
-
-    /**
-     * The drop down menu
-     * @ignore
-     */
-    this.__select = document.createElement('select');
-
-    if (common.isArray(options)) {
-      var map = {};
-      common.each(options, function(element) {
-        map[element] = element;
-      });
-      options = map;
-    }
-
-    common.each(options, function(value, key) {
-
-      var opt = document.createElement('option');
-      opt.innerHTML = key;
-      opt.setAttribute('value', value);
-      _this.__select.appendChild(opt);
-
-    });
-
-    // Acknowledge original value
-    this.updateDisplay();
-
-    dom.bind(this.__select, 'change', function() {
-      var desiredValue = this.options[this.selectedIndex].value;
-      _this.setValue(desiredValue);
-    });
-
-    this.domElement.appendChild(this.__select);
-
-  };
-
-  OptionController.superclass = Controller;
-
-  common.extend(
-
-      OptionController.prototype,
-      Controller.prototype,
-
-      {
-
-        setValue: function(v) {
-          var toReturn = OptionController.superclass.prototype.setValue.call(this, v);
-          if (this.__onFinishChange) {
-            this.__onFinishChange.call(this, this.getValue());
-          }
-          return toReturn;
-        },
-
-        updateDisplay: function() {
-          this.__select.value = this.getValue();
-          return OptionController.superclass.prototype.updateDisplay.call(this);
-        }
-
-      }
-
-  );
-
-  return OptionController;
-
-})(dat.controllers.Controller,
-dat.dom.dom,
-dat.utils.common),
 dat.controllers.ColorController = (function (Controller, dom, Color, interpret, common) {
 
-  var ColorController = function(property, value) {
+  var ColorController = function(name, value) {
 
-    ColorController.superclass.call(this, property, value);
+    ColorController.superclass.call(this, name, value, 'color');
 
     this.__color = new Color(this.getValue());
     this.__temp = new Color(0);
@@ -2349,7 +1866,7 @@ dat.color.Color = (function (interpret, math, toString, common) {
         }
     );
 
-    if (!common.isNaN(result.h)) {
+    if (!isNaN(result.h)) {
       color.__state.h = result.h;
     } else if (common.isUndefined(color.__state.h)) {
       color.__state.h = 0;
@@ -2448,6 +1965,444 @@ dat.color.math = (function () {
 dat.color.toString,
 dat.utils.common),
 dat.color.interpret,
+dat.utils.common),
+dat.controllers.NumberController = (function (Controller, dom, common) {
+
+  /**
+   * @class Represents a given property of an object that is a number.
+   *
+   * @extends dat.controllers.Controller
+   *
+   * @param {Object} object The object to be manipulated
+   * @param {string} property The name of the property to be manipulated
+   * @param {Object} [params] Optional parameters
+   * @param {Number} [params.min] Minimum allowed value
+   * @param {Number} [params.max] Maximum allowed value
+   * @param {Number} [params.step] Increment by which to change value
+   *
+   * @member dat.controllers
+   */
+  var NumberController = function(name, value, params) {
+
+    NumberController.superclass.call(this, name, value, 'number');
+
+    var _this = this;
+
+    params = params || {};
+
+    var UP_ARROW = 38;
+    var DOWN_ARROW = 40;
+
+    this.min(params.min);
+    this.max(params.max);
+    this.step(params.step || 1);
+
+    this.__input = document.createElement('input');
+    this.__input.setAttribute('type', 'text');
+
+    this.__decrement_button = document.createElement('span');
+    this.__decrement_button.textContent = '-';
+
+    this.__increment_button = document.createElement('span');
+    this.__increment_button.textContent = '+';
+
+    dom.bind(this.__input, 'change', function() {
+      var value = _this.__input.value;
+      _this.setValue(isNaN(value) ? _this.getValue() : value);
+    });
+
+    dom.bind(this.__input, 'keydown', function(e) {
+      switch(e.keyCode) {
+        case DOWN_ARROW:
+          e.preventDefault();
+          decrement();
+          break;
+        case UP_ARROW:
+          e.preventDefault();
+          increment();
+          break;
+      }
+    });
+
+    dom.bind(this.__decrement_button, 'click', decrement);
+    dom.bind(this.__increment_button, 'click', increment);
+
+    function decrement() {
+      _this.setValue(_this.__value - _this.__step);
+    }
+
+    function increment() {
+      _this.setValue(_this.__value + _this.__step);
+    }
+
+    this.updateDisplay();
+
+    this.el.appendChild(this.__decrement_button);
+    this.el.appendChild(this.__input);
+    this.el.appendChild(this.__increment_button);
+
+  };
+
+  NumberController.superclass = Controller;
+
+  common.extend(
+
+      NumberController.prototype,
+      Controller.prototype,
+
+      /** @lends dat.controllers.NumberController.prototype */
+      {
+
+        setValue: function(v) {
+
+          // make sure v is a Number
+          v = parseFloat(v);
+
+          if (this.__min !== undefined && v < this.__min) {
+            v = this.__min;
+          } else if (this.__max !== undefined && v > this.__max) {
+            v = this.__max;
+          }
+
+          if (this.__step !== undefined && v % this.__step != 0) {
+            v = Math.round(v / this.__step) * this.__step;
+          }
+
+          if (this.__precision !== undefined) {
+            v = parseFloat(v.toFixed(this.__precision));
+          }
+
+          return NumberController.superclass.prototype.setValue.call(this, v);
+
+        },
+
+        updateDisplay: function() {
+          this.__input.value = this.getValue();
+        },
+
+        /**
+         * Specify a minimum value for <code>object[property]</code>.
+         *
+         * @param {Number} minValue The minimum value for
+         * <code>object[property]</code>
+         * @returns {dat.controllers.NumberController} this
+         */
+        min: function(v) {
+          this.__min = v;
+          return this;
+        },
+
+        /**
+         * Specify a maximum value for <code>object[property]</code>.
+         *
+         * @param {Number} maxValue The maximum value for
+         * <code>object[property]</code>
+         * @returns {dat.controllers.NumberController} this
+         */
+        max: function(v) {
+          this.__max = v;
+          return this;
+        },
+
+        /**
+         * Specify a step value that dat.controllers.NumberController
+         * increments by.
+         *
+         * @param {Number} stepValue The step value for
+         * dat.controllers.NumberController
+         * @default if minimum and maximum specified increment is 1% of the
+         * difference otherwise stepValue is 1
+         * @returns {dat.controllers.NumberController} this
+         */
+        step: function(v) {
+          this.__step = v;
+          this.__precision = numDecimals(v);
+          return this;
+        }
+
+      }
+
+  );
+
+  function numDecimals(x) {
+    x = x.toString();
+    if (x.indexOf('.') > -1) {
+      return x.length - x.indexOf('.') - 1;
+    } else {
+      return 0;
+    }
+  }
+
+  return NumberController;
+
+})(dat.controllers.Controller,
+dat.dom.dom,
+dat.utils.common),
+dat.controllers.OptionController = (function (Controller, dom, common) {
+
+  /**
+   * @class Provides a select input to alter the property of an object, using a
+   * list of accepted values.
+   *
+   * @extends dat.controllers.Controller
+   *
+   * @param {Object} object The object to be manipulated
+   * @param {string} property The name of the property to be manipulated
+   * @param {Object|string[]} options A map of labels to acceptable values, or
+   * a list of acceptable string values.
+   *
+   * @member dat.controllers
+   */
+  var OptionController = function(name, value, options) {
+
+    OptionController.superclass.call(this, name, value, 'option');
+
+    var _this = this;
+
+    /**
+     * The drop down menu
+     * @ignore
+     */
+    this.__select = document.createElement('select');
+
+    if (common.isArray(options)) {
+      var map = {};
+      common.each(options, function(element) {
+        map[element] = element;
+      });
+      options = map;
+    }
+
+    common.each(options, function(value, key) {
+
+      var opt = document.createElement('option');
+      opt.innerHTML = key;
+      opt.setAttribute('value', value);
+      _this.__select.appendChild(opt);
+
+    });
+
+    // Acknowledge original value
+    this.updateDisplay();
+
+    dom.bind(this.__select, 'change', function() {
+      var desiredValue = this.options[this.selectedIndex].value;
+      _this.setValue(desiredValue);
+    });
+
+    this.el.appendChild(this.__select);
+
+  };
+
+  OptionController.superclass = Controller;
+
+  common.extend(
+
+      OptionController.prototype,
+      Controller.prototype,
+
+      {
+
+        setValue: function(v) {
+          var toReturn = OptionController.superclass.prototype.setValue.call(this, v);
+          if (this.__onFinishChange) {
+            this.__onFinishChange.call(this, this.getValue());
+          }
+          return toReturn;
+        },
+
+        updateDisplay: function() {
+          this.__select.value = this.getValue();
+          return OptionController.superclass.prototype.updateDisplay.call(this);
+        }
+
+      }
+
+  );
+
+  return OptionController;
+
+})(dat.controllers.Controller,
+dat.dom.dom,
+dat.utils.common),
+dat.controllers.StringController = (function (Controller, dom, common) {
+
+  /**
+   * @class Provides a text input to alter the string property of an object.
+   *
+   * @extends dat.controllers.Controller
+   *
+   * @param {Object} object The object to be manipulated
+   * @param {string} property The name of the property to be manipulated
+   *
+   * @member dat.controllers
+   */
+  var StringController = function(name, value) {
+
+    StringController.superclass.call(this, name, value, 'string');
+
+    var _this = this;
+
+    this.__input = document.createElement('input');
+    this.__input.setAttribute('type', 'text');
+
+    dom.bind(this.__input, 'keyup', onChange);
+    dom.bind(this.__input, 'change', onChange);
+    dom.bind(this.__input, 'blur', onBlur);
+    dom.bind(this.__input, 'keydown', function(e) {
+      if (e.keyCode === 13) {
+        this.blur();
+      }
+    });
+    
+
+    function onChange() {
+      _this.setValue(_this.__input.value);
+    }
+
+    function onBlur() {
+      if (_this.__onFinishChange) {
+        _this.__onFinishChange.call(_this, _this.getValue());
+      }
+    }
+
+    this.updateDisplay();
+
+    this.el.appendChild(this.__input);
+
+  };
+
+  StringController.superclass = Controller;
+
+  common.extend(
+
+      StringController.prototype,
+      Controller.prototype,
+
+      {
+
+        updateDisplay: function() {
+          // Stops the caret from moving on account of:
+          // keyup -> setValue -> updateDisplay
+          if (!dom.isActive(this.__input)) {
+            this.__input.value = this.getValue();
+          }
+          return StringController.superclass.prototype.updateDisplay.call(this);
+        }
+
+      }
+
+  );
+
+  return StringController;
+
+})(dat.controllers.Controller,
+dat.dom.dom,
+dat.utils.common),
+dat.controllers.UnitController = (function (Controller, dom, common) {
+
+    var units = ['px', 'em', 'pt'];
+
+    var Unit = function(value) {
+
+        if (value.substr) {
+            this.num = value.substr(0, value.length - 2);
+            this.unit = value.substr(-2);
+        }
+
+        if (this.num == '' || isNaN(this.num) || !common.contains(units, this.unit)) {
+            throw 'Failed to interpret unit argument';
+        }
+
+        this.num = parseFloat(this.num);
+
+    };
+
+    common.extend(Unit.prototype, {
+
+        toString: function() {
+            return this.num + this.unit;
+        }
+
+    });
+
+
+    /**
+     * @class Represents a given property of an object that is a css unit.
+     *
+     * @extends dat.controllers.Controller
+     *
+     * @param {Object} object The object to be manipulated
+     * @param {string} property The name of the property to be manipulated
+     * @param {Object} [params] Optional parameters
+     * @param {Number} [params.min] Minimum allowed value
+     * @param {Number} [params.max] Maximum allowed value
+     * @param {Number} [params.step] Increment by which to change value
+     *
+     * @member dat.controllers
+     */
+    var UnitController = function(name, value, params) {
+
+        UnitController.superclass.call(this, name, value, 'unit');
+
+        this.__unit = new Unit(this.getValue());
+
+        var _this = this;
+
+        this.__input = document.createElement('input');
+        this.__input.setAttribute('type', 'text');
+
+        this.__select = document.createElement('select');
+
+        common.each(units, function(unit) {
+            var option = document.createElement('option');
+            option.innerHTML = unit;
+            option.setAttribute('value', unit);
+            _this.__select.appendChild(option);
+        });
+
+        dom.bind(this.__input, 'change', function() {
+            var value = _this.__input.value;
+            if (!isNaN(value)) _this.__unit.num = value;
+            _this.setValue(_this.__unit.toString());
+        });
+
+        dom.bind(this.__select, 'change', function() {
+            var value = this.options[this.selectedIndex].value;
+            _this.__unit.unit = value;
+            _this.setValue(_this.__unit.toString());
+        });
+
+        this.updateDisplay();
+
+        this.el.appendChild(this.__input);
+        this.el.appendChild(this.__select);
+
+    };
+
+    UnitController.superclass = Controller;
+
+    common.extend(
+
+        UnitController.prototype,
+        Controller.prototype,
+
+        /** @lends dat.controllers.NumberController.prototype */
+        {
+
+            updateDisplay: function() {
+                this.__input.value = this.__unit.num;
+                this.__select.value = this.__unit.unit;
+            }
+
+        }
+
+    );
+
+    return UnitController;
+
+})(dat.controllers.Controller,
+dat.dom.dom,
 dat.utils.common),
 dat.dom.dom,
 dat.utils.common);

@@ -19,9 +19,9 @@ define([
   'dat/utils/common'
 ], function(Controller, dom, Color, interpret, common) {
 
-  var ColorController = function(property, value) {
+  var ColorController = function(name, value) {
 
-    ColorController.superclass.call(this, property, value);
+    ColorController.superclass.call(this, name, value, 'color');
 
     this.__color = new Color(this.getValue());
     this.__temp = new Color(0);

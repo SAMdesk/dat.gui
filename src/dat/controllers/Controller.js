@@ -23,18 +23,23 @@ define([
    *
    * @member dat.controllers
    */
-  var Controller = function(property, value) {
+  var Controller = function(name, value, type) {
 
     /**
      * Keep track of the property name
      */
-    this.__property = property;
+    this.__name = name;
 
     /**
      * Keep track of the initial and current Controller values
      */
     this.__value = value;
     this.__initialValue = value;
+
+    /**
+     * Keep track of the type of Controller for style purposes
+     */
+    this.__type = type;
 
     /**
      * Those who extend this class will put their DOM elements in here.
@@ -93,23 +98,35 @@ define([
         },
 
         /**
-         * Gets the value of <code>__property</code>
+         * Gets the value of <code>__name</code>
          *
-         * @returns {Object} The current value of <code>__property</code>
+         * @returns {Object} The current value of <code>__name</code>
          */
-        getProperty: function() {
-          return this.__property;
+        getName: function() {
+          return this.__name;
+        },
+
+        /**
+         * Change the value of <code>__initialValue</code>
+         *
+         * @param {Object} value The new value of <code>__initialValue</code>
+         */
+        setInitialValue: function(value) {
+          this.__initialValue = value;
+          return this;
         },
 
         /**
          * Change the value of <code>__value</code>
          *
-         * @param {Object} newValue The new value of <code>object[property]</code>
+         * @param {Object} value The new value of <code>__value</code>
          */
         setValue: function(value) {
-          this.__value = value;
-          if (this.__onChange) {
-            this.__onChange.call(this, value);
+          if (value != this.__value) {
+            this.__value = value;
+            if (this.__onChange) {
+              this.__onChange.call(this, value);
+            }
           }
           this.updateDisplay();
           return this;
@@ -122,6 +139,15 @@ define([
          */
         getValue: function() {
           return this.__value;
+        },
+
+        /**
+         * Gets the value of <code>__type</code>
+         *
+         * @returns {String} The current value of <code>__type</code>
+         */
+        getType: function() {
+          return this.__type;
         },
 
         /**

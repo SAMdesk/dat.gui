@@ -27,9 +27,9 @@ define([
    *
    * @member dat.controllers
    */
-  var StringController = function(object, property) {
+  var StringController = function(name, value) {
 
-    StringController.superclass.call(this, object, property);
+    StringController.superclass.call(this, name, value, 'string');
 
     var _this = this;
 
@@ -58,7 +58,7 @@ define([
 
     this.updateDisplay();
 
-    this.domElement.appendChild(this.__input);
+    this.el.appendChild(this.__input);
 
   };
 

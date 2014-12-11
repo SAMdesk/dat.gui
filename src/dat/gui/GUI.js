@@ -18,18 +18,18 @@ define([
 
   'dat/controllers/Controller',
   'dat/controllers/BooleanController',
-  'dat/controllers/FunctionController',
-  'dat/controllers/NumberControllerBox',
-  'dat/controllers/NumberControllerSlider',
-  'dat/controllers/OptionController',
   'dat/controllers/ColorController',
+  'dat/controllers/NumberController',
+  'dat/controllers/OptionController',
+  'dat/controllers/StringController',
+  'dat/controllers/UnitController',
 
   'dat/dom/dom',
   'dat/utils/common'
 
-], function(css, styleSheet, Controller, BooleanController, FunctionController, NumberControllerBox, NumberControllerSlider, OptionController, ColorController, dom, common) {
+], function(css, styleSheet, Controller, BooleanController, ColorController, NumberController, OptionController, StringController, UnitController, dom, common) {
 
-  css.inject(styleSheet);
+  //css.inject(styleSheet);
 
   /** Outer-most className for GUI's */
   var CSS_NAMESPACE = 'dg';
@@ -247,7 +247,7 @@ define([
 
     var name = document.createElement('span');
     dom.addClass(name, 'property-name');
-    name.innerHTML = controller.getProperty();
+    name.innerHTML = controller.getName();
 
     var container = document.createElement('div');
     container.appendChild(name);
@@ -256,7 +256,7 @@ define([
     var li = addRow(gui, container);
 
     dom.addClass(li, GUI.CLASS_CONTROLLER_ROW);
-    dom.addClass(li, typeof controller.getValue());
+    dom.addClass(li, controller.getType());
 
     gui.__controllers.push(controller);
 

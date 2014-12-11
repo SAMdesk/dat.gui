@@ -31,9 +31,9 @@ function(Controller, dom, common) {
    *
    * @member dat.controllers
    */
-  var OptionController = function(object, property, options) {
+  var OptionController = function(name, value, options) {
 
-    OptionController.superclass.call(this, object, property);
+    OptionController.superclass.call(this, name, value, 'option');
 
     var _this = this;
 
@@ -68,7 +68,7 @@ function(Controller, dom, common) {
       _this.setValue(desiredValue);
     });
 
-    this.domElement.appendChild(this.__select);
+    this.el.appendChild(this.__select);
 
   };
 

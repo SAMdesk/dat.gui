@@ -26,9 +26,9 @@ define([
    *
    * @member dat.controllers
    */
-  var BooleanController = function(object, property) {
+  var BooleanController = function(name, value) {
 
-    BooleanController.superclass.call(this, object, property);
+    BooleanController.superclass.call(this, name, value, 'boolean');
 
     var _this = this;
     this.__prev = this.getValue();
@@ -39,7 +39,7 @@ define([
 
     dom.bind(this.__checkbox, 'change', onChange, false);
 
-    this.domElement.appendChild(this.__checkbox);
+    this.el.appendChild(this.__checkbox);
 
     // Match original value
     this.updateDisplay();

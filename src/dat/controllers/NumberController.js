@@ -12,9 +12,10 @@
  */
 
 define([
-    'dat/controllers/Controller',
-    'dat/utils/common'
-], function(Controller, common) {
+  'dat/controllers/Controller',
+  'dat/dom/dom',
+  'dat/utils/common'
+], function(Controller, dom, common) {
 
   /**
    * @class Represents a given property of an object that is a number.
@@ -30,33 +31,64 @@ define([
    *
    * @member dat.controllers
    */
-  var NumberController = function(object, property, params) {
+  var NumberController = function(name, value, params) {
 
-    NumberController.superclass.call(this, object, property);
+    NumberController.superclass.call(this, name, value, 'number');
+
+    var _this = this;
 
     params = params || {};
 
-    this.__min = params.min;
-    this.__max = params.max;
-    this.__step = params.step;
+    var UP_ARROW = 38;
+    var DOWN_ARROW = 40;
 
-    if (common.isUndefined(this.__step)) {
+    this.min(params.min);
+    this.max(params.max);
+    this.step(params.step || 1);
 
-      if (this.initialValue == 0) {
-        this.__impliedStep = 1; // What are we, psychics?
-      } else {
-        // Hey Doug, check this out.
-        this.__impliedStep = Math.pow(10, Math.floor(Math.log(this.initialValue)/Math.LN10))/10;
+    this.__input = document.createElement('input');
+    this.__input.setAttribute('type', 'text');
+
+    this.__decrement_button = document.createElement('span');
+    this.__decrement_button.textContent = '-';
+
+    this.__increment_button = document.createElement('span');
+    this.__increment_button.textContent = '+';
+
+    dom.bind(this.__input, 'change', function() {
+      var value = _this.__input.value;
+      _this.setValue(isNaN(value) ? _this.getValue() : value);
+    });
+
+    dom.bind(this.__input, 'keydown', function(e) {
+      switch(e.keyCode) {
+        case DOWN_ARROW:
+          e.preventDefault();
+          decrement();
+          break;
+        case UP_ARROW:
+          e.preventDefault();
+          increment();
+          break;
       }
+    });
 
-    } else {
+    dom.bind(this.__decrement_button, 'click', decrement);
+    dom.bind(this.__increment_button, 'click', increment);
 
-    	this.__impliedStep = this.__step;
-
+    function decrement() {
+      _this.setValue(_this.__value - _this.__step);
     }
 
-    this.__precision = numDecimals(this.__impliedStep);
+    function increment() {
+      _this.setValue(_this.__value + _this.__step);
+    }
 
+    this.updateDisplay();
+
+    this.el.appendChild(this.__decrement_button);
+    this.el.appendChild(this.__input);
+    this.el.appendChild(this.__increment_button);
 
   };
 
@@ -72,6 +104,9 @@ define([
 
         setValue: function(v) {
 
+          // make sure v is a Number
+          v = parseFloat(v);
+
           if (this.__min !== undefined && v < this.__min) {
             v = this.__min;
           } else if (this.__max !== undefined && v > this.__max) {
@@ -82,8 +117,16 @@ define([
             v = Math.round(v / this.__step) * this.__step;
           }
 
+          if (this.__precision !== undefined) {
+            v = parseFloat(v.toFixed(this.__precision));
+          }
+
           return NumberController.superclass.prototype.setValue.call(this, v);
 
+        },
+
+        updateDisplay: function() {
+          this.__input.value = this.getValue();
         },
 
         /**
@@ -122,7 +165,6 @@ define([
          */
         step: function(v) {
           this.__step = v;
-          this.__impliedStep = v;
           this.__precision = numDecimals(v);
           return this;
         }
