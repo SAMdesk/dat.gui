@@ -19,12 +19,9 @@ define([
   'dat/utils/common'
 ], function(Controller, dom, Color, interpret, common) {
 
-  var ColorController = function(input) {
+  var ColorController = function(property, value) {
 
-    //ColorController.superclass.call(this, object, property);
-
-    this.__input = input;
-    this.__value = this.__input.value;
+    ColorController.superclass.call(this, property, value);
 
     this.__color = new Color(this.getValue());
     this.__temp = new Color(0);
@@ -33,9 +30,7 @@ define([
 
     var alpha_grid = 'url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAAXNSR0IArs4c6QAAAC9JREFUGBljvH///n8GJCAtLY3EY2BgQuFh4VCugPHXr18obnj69CmKRZRbQdAEADT3Cphpg+hIAAAAAElFTkSuQmCC")';
 
-    //this.domElement = document.createElement('div');
-    //
-    //dom.makeSelectable(this.domElement, false);
+    dom.makeSelectable(this.el, false);
 
     this.__swatch = document.createElement('div');
     this.__swatch.className = 'ui-swatch';
@@ -68,9 +63,9 @@ define([
     this.__alpha_container = document.createElement('div');
     this.__alpha_container.className = 'alpha-container';
 
-    //this.__input = document.createElement('input');
-    //this.__input.type = 'text';
-    //this.__input_textShadow = '0 1px 1px ';
+    this.__input = document.createElement('input');
+    this.__input.type = 'text';
+    this.__input_textShadow = '0 1px 1px ';
 
     dom.bind(this.__input, 'keydown', function(e) {
       if (e.keyCode === 13) { // on enter
@@ -248,8 +243,9 @@ define([
     this.__alpha_field.appendChild(this.__alpha_knob);
     this.__swatch_container.appendChild(this.__swatch);
 
-    this.__input.parentNode.insertBefore(this.__swatch_container, this.__input);
-    this.__input.parentNode.appendChild(this.__selector);
+    this.el.appendChild(this.__swatch_container);
+    this.el.appendChild(this.__input);
+    this.el.appendChild(this.__selector);
 
     this.updateDisplay();
 
@@ -339,19 +335,6 @@ define([
       Controller.prototype,
 
       {
-
-        getValue: function() {
-          return this.__value;
-        },
-
-        setValue: function(value) {
-          this.__value = value;
-          if (this.__onChange) {
-            this.__onChange.call(this, value);
-          }
-          this.updateDisplay();
-          return this;
-        },
 
         updateDisplay: function() {
 

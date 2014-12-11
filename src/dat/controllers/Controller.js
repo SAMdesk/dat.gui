@@ -23,27 +23,24 @@ define([
    *
    * @member dat.controllers
    */
-  var Controller = function(object, property) {
+  var Controller = function(property, value) {
 
-    this.initialValue = object[property];
+    /**
+     * Keep track of the property name
+     */
+    this.__property = property;
+
+    /**
+     * Keep track of the initial and current Controller values
+     */
+    this.__value = value;
+    this.__initialValue = value;
 
     /**
      * Those who extend this class will put their DOM elements in here.
      * @type {DOMElement}
      */
-    this.domElement = document.createElement('div');
-
-    /**
-     * The object to manipulate
-     * @type {Object}
-     */
-    this.object = object;
-
-    /**
-     * The name of the property to manipulate
-     * @type {String}
-     */
-    this.property = property;
+    this.el = document.createElement('div');
 
     /**
      * The function to be called on change.
@@ -96,26 +93,35 @@ define([
         },
 
         /**
-         * Change the value of <code>object[property]</code>
+         * Gets the value of <code>__property</code>
+         *
+         * @returns {Object} The current value of <code>__property</code>
+         */
+        getProperty: function() {
+          return this.__property;
+        },
+
+        /**
+         * Change the value of <code>__value</code>
          *
          * @param {Object} newValue The new value of <code>object[property]</code>
          */
-        setValue: function(newValue) {
-          this.object[this.property] = newValue;
+        setValue: function(value) {
+          this.__value = value;
           if (this.__onChange) {
-            this.__onChange.call(this, newValue);
+            this.__onChange.call(this, value);
           }
           this.updateDisplay();
           return this;
         },
 
         /**
-         * Gets the value of <code>object[property]</code>
+         * Gets the value of <code>__value</code>
          *
-         * @returns {Object} The current value of <code>object[property]</code>
+         * @returns {Object} The current value of <code>__value</code>
          */
         getValue: function() {
-          return this.object[this.property];
+          return this.__value;
         },
 
         /**
@@ -131,7 +137,7 @@ define([
          * @returns {Boolean} true if the value has deviated from initialValue
          */
         isModified: function() {
-          return this.initialValue !== this.getValue()
+          return this.__initialValue !== this.getValue()
         }
 
       }
