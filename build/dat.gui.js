@@ -170,7 +170,7 @@ dat.controllers.Controller = (function (common) {
    *
    * @member dat.controllers
    */
-  var Controller = function(name, value, type) {
+  var Controller = function(name, value, type, options) {
 
     /**
      * Keep track of the property name
@@ -187,6 +187,11 @@ dat.controllers.Controller = (function (common) {
      * Keep track of the type of Controller for style purposes
      */
     this.__type = type;
+
+    /**
+     * Keep track of the options
+     */
+    this.__options = options;
 
     /**
      * Those who extend this class will put their DOM elements in here.
@@ -1110,7 +1115,7 @@ dat.GUI = dat.gui.GUI = (function (css, styleSheet, Controller, BooleanControlle
          * @instance
          */
         add: function(controller) {
-          return add(this, controller );
+          return add(this, controller);
         },
 
         /**
@@ -1242,6 +1247,7 @@ dat.controllers.BooleanController = (function (Controller, dom, common) {
 
     this.__checkbox = document.createElement('input');
     this.__checkbox.setAttribute('type', 'checkbox');
+    this.__checkbox.style.display = 'block';
 
 
     dom.bind(this.__checkbox, 'change', onChange, false);
@@ -2157,17 +2163,23 @@ dat.controllers.OptionController = (function (Controller, dom, common) {
    *
    * @member dat.controllers
    */
-  var OptionController = function(name, value, options) {
+  var OptionController = function(name, value, options, params) {
 
-    OptionController.superclass.call(this, name, value, 'option');
+    OptionController.superclass.call(this, name, value, 'option', params);
 
     var _this = this;
+    this.CUSTOM_FLAG = '';
+
+    params = params || {};
 
     /**
      * The drop down menu
      * @ignore
      */
     this.__select = document.createElement('select');
+
+    this.__input = document.createElement('input');
+    this.__input.setAttribute('type', 'text');
 
     if (common.isArray(options)) {
       var map = {};
@@ -2186,15 +2198,28 @@ dat.controllers.OptionController = (function (Controller, dom, common) {
 
     });
 
+    if (params.custom) {
+      var opt = document.createElement('option');
+      opt.innerHTML = 'Custom';
+      opt.setAttribute('value', _this.CUSTOM_FLAG);
+      _this.__select.appendChild(opt);
+    }
+
     // Acknowledge original value
     this.updateDisplay();
 
     dom.bind(this.__select, 'change', function() {
-      var desiredValue = this.options[this.selectedIndex].value;
-      _this.setValue(desiredValue);
+      var value = this.options[this.selectedIndex].value;
+      _this.setValue(value);
+    });
+
+    dom.bind(this.__input, 'change', function() {
+      var value = this.value;
+      _this.setValue(value);
     });
 
     this.el.appendChild(this.__select);
+    this.el.appendChild(this.__input);
 
   };
 
@@ -2216,8 +2241,20 @@ dat.controllers.OptionController = (function (Controller, dom, common) {
         },
 
         updateDisplay: function() {
-          this.__select.value = this.getValue();
+
+          var value = this.getValue();
+          var custom = true;
+          if (value != this.CUSTOM_FLAG) {
+            common.each(this.__select.options, function(option) {
+              if (value == option.value) custom = false;
+            });
+          }
+
+          this.__select.value = custom ? this.CUSTOM_FLAG : value;
+          this.__input.value = custom ? value : '';
+          this.__input.style.display = custom ? 'block' : 'none';
           return OptionController.superclass.prototype.updateDisplay.call(this);
+
         }
 
       }

@@ -189,7 +189,7 @@ define([
          * @instance
          */
         add: function(controller) {
-          return add(this, controller );
+          return add(this, controller);
         },
 
         /**

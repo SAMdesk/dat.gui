@@ -23,7 +23,7 @@ define([
    *
    * @member dat.controllers
    */
-  var Controller = function(name, value, type) {
+  var Controller = function(name, value, type, options) {
 
     /**
      * Keep track of the property name
@@ -40,6 +40,11 @@ define([
      * Keep track of the type of Controller for style purposes
      */
     this.__type = type;
+
+    /**
+     * Keep track of the options
+     */
+    this.__options = options;
 
     /**
      * Those who extend this class will put their DOM elements in here.
