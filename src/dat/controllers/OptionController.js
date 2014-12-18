@@ -49,6 +49,9 @@ function(Controller, dom, common) {
     this.__input = document.createElement('input');
     this.__input.setAttribute('type', 'text');
 
+    this.__arrow = document.createElement('label');
+    this.__arrow.className = 'caret-down';
+
     if (common.isArray(params)) {
       var map = {};
       common.each(params, function(element) {
@@ -88,6 +91,7 @@ function(Controller, dom, common) {
 
     this.el.appendChild(this.__select);
     this.el.appendChild(this.__input);
+    this.el.appendChild(this.__arrow);
 
   };
 

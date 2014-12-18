@@ -1374,7 +1374,7 @@ dat.controllers.ColorController = (function (Controller, dom, Color, interpret, 
     this.__input_textShadow = '0 1px 1px ';
 
     this.__input_container = document.createElement('div');
-    this.__input_container.style.marginLeft = '28px';
+    this.__input_container.style.marginLeft = '33px';
 
     dom.bind(this.__input, 'keydown', function(e) {
       if (e.keyCode === 13) { // on enter
@@ -2217,6 +2217,9 @@ dat.controllers.OptionController = (function (Controller, dom, common) {
     this.__input = document.createElement('input');
     this.__input.setAttribute('type', 'text');
 
+    this.__arrow = document.createElement('label');
+    this.__arrow.className = 'caret-down';
+
     if (common.isArray(params)) {
       var map = {};
       common.each(params, function(element) {
@@ -2256,6 +2259,7 @@ dat.controllers.OptionController = (function (Controller, dom, common) {
 
     this.el.appendChild(this.__select);
     this.el.appendChild(this.__input);
+    this.el.appendChild(this.__arrow);
 
   };
 
@@ -2436,6 +2440,9 @@ dat.controllers.UnitController = (function (Controller, dom, common) {
 
         this.__select = document.createElement('select');
 
+        this.__arrow = document.createElement('label');
+        this.__arrow.className = 'caret-down';
+
         common.each(units, function(unit) {
             var option = document.createElement('option');
             option.innerHTML = unit;
@@ -2459,6 +2466,7 @@ dat.controllers.UnitController = (function (Controller, dom, common) {
 
         this.el.appendChild(this.__input);
         this.el.appendChild(this.__select);
+        this.el.appendChild(this.__arrow);
 
     };
 

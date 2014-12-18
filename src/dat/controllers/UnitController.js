@@ -70,6 +70,9 @@ define([
 
         this.__select = document.createElement('select');
 
+        this.__arrow = document.createElement('label');
+        this.__arrow.className = 'caret-down';
+
         common.each(units, function(unit) {
             var option = document.createElement('option');
             option.innerHTML = unit;
@@ -93,6 +96,7 @@ define([
 
         this.el.appendChild(this.__input);
         this.el.appendChild(this.__select);
+        this.el.appendChild(this.__arrow);
 
     };
 

@@ -68,7 +68,7 @@ define([
     this.__input_textShadow = '0 1px 1px ';
 
     this.__input_container = document.createElement('div');
-    this.__input_container.style.marginLeft = '28px';
+    this.__input_container.style.marginLeft = '33px';
 
     dom.bind(this.__input, 'keydown', function(e) {
       if (e.keyCode === 13) { // on enter
