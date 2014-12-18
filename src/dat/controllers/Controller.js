@@ -34,6 +34,7 @@ define([
      * Keep track of the initial and current Controller values
      */
     this.__value = value;
+    this.__prevValue = value;
     this.__initialValue = value;
 
     /**
@@ -65,6 +66,8 @@ define([
      * @ignore
      */
     this.__onFinishChange = undefined;
+
+    this.__onReadonlyChange = undefined;
 
   };
 
@@ -102,6 +105,11 @@ define([
           return this;
         },
 
+        onReadonlyChange: function(fnc) {
+          this.__onReadonlyChange = fnc;
+          return this;
+        },
+
         /**
          * Gets the value of <code>__name</code>
          *
@@ -109,6 +117,23 @@ define([
          */
         getName: function() {
           return this.__name;
+        },
+
+        /**
+         * Change the value of <code>__prevValue</code>
+         *
+         * @param {Object} value The new value of <code>__prevValue</code>
+         */
+        setPrevValue: function(value) {
+          this.__prevValue = value;
+          return this;
+        },
+
+        /**
+         * Resets the value of <code>__value</code> to that of <code>__initalValue</code>
+         */
+        resetValue: function() {
+          this.setValue(this.__initialValue);
         },
 
         /**
@@ -169,7 +194,11 @@ define([
 
         setReadonly: function(value) {
           this.setOption('readonly', value);
+          if (this.__onReadonlyChange) {
+            this.__onReadonlyChange.call(this, value);
+          }
           this.updateDisplay();
+          return this;
         },
 
         /**
@@ -182,10 +211,10 @@ define([
         },
 
         /**
-         * @returns {Boolean} true if the value has deviated from initialValue
+         * @returns {Boolean} true if the value has deviated from prevValue
          */
         isModified: function() {
-          return this.__initialValue !== this.getValue()
+          return this.__prevValue !== this.getValue()
         }
 
       }

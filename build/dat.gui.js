@@ -181,6 +181,7 @@ dat.controllers.Controller = (function (common) {
      * Keep track of the initial and current Controller values
      */
     this.__value = value;
+    this.__prevValue = value;
     this.__initialValue = value;
 
     /**
@@ -212,6 +213,8 @@ dat.controllers.Controller = (function (common) {
      * @ignore
      */
     this.__onFinishChange = undefined;
+
+    this.__onReadonlyChange = undefined;
 
   };
 
@@ -249,6 +252,11 @@ dat.controllers.Controller = (function (common) {
           return this;
         },
 
+        onReadonlyChange: function(fnc) {
+          this.__onReadonlyChange = fnc;
+          return this;
+        },
+
         /**
          * Gets the value of <code>__name</code>
          *
@@ -256,6 +264,23 @@ dat.controllers.Controller = (function (common) {
          */
         getName: function() {
           return this.__name;
+        },
+
+        /**
+         * Change the value of <code>__prevValue</code>
+         *
+         * @param {Object} value The new value of <code>__prevValue</code>
+         */
+        setPrevValue: function(value) {
+          this.__prevValue = value;
+          return this;
+        },
+
+        /**
+         * Resets the value of <code>__value</code> to that of <code>__initalValue</code>
+         */
+        resetValue: function() {
+          this.setValue(this.__initialValue);
         },
 
         /**
@@ -316,7 +341,11 @@ dat.controllers.Controller = (function (common) {
 
         setReadonly: function(value) {
           this.setOption('readonly', value);
+          if (this.__onReadonlyChange) {
+            this.__onReadonlyChange.call(this, value);
+          }
           this.updateDisplay();
+          return this;
         },
 
         /**
@@ -329,10 +358,10 @@ dat.controllers.Controller = (function (common) {
         },
 
         /**
-         * @returns {Boolean} true if the value has deviated from initialValue
+         * @returns {Boolean} true if the value has deviated from prevValue
          */
         isModified: function() {
-          return this.__initialValue !== this.getValue()
+          return this.__prevValue !== this.getValue()
         }
 
       }
@@ -1192,6 +1221,21 @@ dat.GUI = dat.gui.GUI = (function (css, styleSheet, Controller, BooleanControlle
     dom.addClass(name, 'property-name');
     name.innerHTML = controller.getName();
 
+    if (controller.getOption('editable')) {
+      var toggle = document.createElement('span');
+      toggle.style.float = 'right';
+      toggle.innerHTML = controller.getReadonly() ? 'edit' : 'x';
+
+      dom.bind(toggle, 'click', function() {
+        var readonly = !controller.getReadonly();
+        controller.setReadonly(readonly);
+        toggle.innerHTML = readonly ? 'edit' : 'x';
+        if (readonly) controller.resetValue();
+      });
+
+      name.appendChild(toggle);
+    }
+
     var container = document.createElement('div');
     container.appendChild(name);
     container.appendChild(controller.el);
@@ -1489,7 +1533,13 @@ dat.controllers.ColorController = (function (Controller, dom, Color, interpret, 
     });
 
     this.__visible = false;
-    dom.bind(this.__swatch, 'click', this.swatchClick);
+    dom.bind(this.__swatch, 'click', function() {
+      if (_this.getReadonly()) return;
+      else _this.__visible = !_this.__visible;
+      common.extend(_this.__selector.style, {
+        display: _this.__visible ? '' : 'none'
+      });
+    });
 
     dom.bind(this.__saturation_field, 'mousedown', fieldDown);
     dom.bind(this.__field_knob, 'mousedown', fieldDown);
@@ -1505,14 +1555,6 @@ dat.controllers.ColorController = (function (Controller, dom, Color, interpret, 
       dom.bind(window, 'mousemove', setA);
       dom.bind(window, 'mouseup', unbindA);
     });
-
-    this.swatchClick = function() {
-      if (_this.getReadonly()) _this.__visible = false;
-      else _this.__visible = !_this.__visible;
-      common.extend(_this.__selector.style, {
-        display: _this.__visible ? '' : 'none'
-      });
-    };
 
     function fieldDown(e) {
       setSV(e);
@@ -1650,8 +1692,11 @@ dat.controllers.ColorController = (function (Controller, dom, Color, interpret, 
       {
 
         setReadonly: function(value) {
-          Controller.prototype.setReadonly(value);
-          this.swatchClick();
+          this.__visible = false;
+          common.extend(this.__selector.style, {
+            display: 'none'
+          });
+          ColorController.superclass.prototype.setReadonly.call(this, value);
         },
 
         updateDisplay: function() {
