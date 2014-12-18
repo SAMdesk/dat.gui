@@ -183,7 +183,13 @@ define([
     });
 
     this.__visible = false;
-    dom.bind(this.__swatch, 'click', this.swatchClick);
+    dom.bind(this.__swatch, 'click', function() {
+      if (_this.getReadonly()) return;
+      else _this.__visible = !_this.__visible;
+      common.extend(_this.__selector.style, {
+        display: _this.__visible ? '' : 'none'
+      });
+    });
 
     dom.bind(this.__saturation_field, 'mousedown', fieldDown);
     dom.bind(this.__field_knob, 'mousedown', fieldDown);
@@ -199,14 +205,6 @@ define([
       dom.bind(window, 'mousemove', setA);
       dom.bind(window, 'mouseup', unbindA);
     });
-
-    this.swatchClick = function() {
-      if (_this.getReadonly()) _this.__visible = false;
-      else _this.__visible = !_this.__visible;
-      common.extend(_this.__selector.style, {
-        display: _this.__visible ? '' : 'none'
-      });
-    };
 
     function fieldDown(e) {
       setSV(e);
@@ -344,8 +342,11 @@ define([
       {
 
         setReadonly: function(value) {
-          Controller.prototype.setReadonly(value);
-          this.swatchClick();
+          this.__visible = false;
+          common.extend(this.__selector.style, {
+            display: 'none'
+          });
+          ColorController.superclass.prototype.setReadonly.call(this, value);
         },
 
         updateDisplay: function() {

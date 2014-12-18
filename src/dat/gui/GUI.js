@@ -249,6 +249,21 @@ define([
     dom.addClass(name, 'property-name');
     name.innerHTML = controller.getName();
 
+    if (controller.getOption('editable')) {
+      var toggle = document.createElement('span');
+      toggle.style.float = 'right';
+      toggle.innerHTML = controller.getReadonly() ? 'edit' : 'x';
+
+      dom.bind(toggle, 'click', function() {
+        var readonly = !controller.getReadonly();
+        controller.setReadonly(readonly);
+        toggle.innerHTML = readonly ? 'edit' : 'x';
+        if (readonly) controller.resetValue();
+      });
+
+      name.appendChild(toggle);
+    }
+
     var container = document.createElement('div');
     container.appendChild(name);
     container.appendChild(controller.el);
