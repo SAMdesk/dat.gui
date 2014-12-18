@@ -26,9 +26,9 @@ define([
    *
    * @member dat.controllers
    */
-  var BooleanController = function(name, value) {
+  var BooleanController = function(name, value, options) {
 
-    BooleanController.superclass.call(this, name, value, 'boolean');
+    BooleanController.superclass.call(this, name, value, 'boolean', options);
 
     var _this = this;
     this.__prev = this.getValue();
@@ -77,6 +77,8 @@ define([
           } else {
               this.__checkbox.checked = false;
           }
+
+          this.__checkbox.disabled = this.getReadonly();
 
           return BooleanController.superclass.prototype.updateDisplay.call(this);
 

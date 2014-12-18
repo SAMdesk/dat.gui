@@ -57,9 +57,9 @@ define([
      *
      * @member dat.controllers
      */
-    var UnitController = function(name, value) {
+    var UnitController = function(name, value, options) {
 
-        UnitController.superclass.call(this, name, value, 'unit');
+        UnitController.superclass.call(this, name, value, 'unit', options);
 
         this.__unit = new Unit(this.getValue());
 
@@ -109,6 +109,9 @@ define([
             updateDisplay: function() {
                 this.__input.value = this.__unit.num;
                 this.__select.value = this.__unit.unit;
+
+                this.__input.disabled = this.getReadonly();
+                this.__select.disabled = this.getReadonly();
             }
 
         }

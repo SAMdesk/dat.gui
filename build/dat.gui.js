@@ -191,7 +191,7 @@ dat.controllers.Controller = (function (common) {
     /**
      * Keep track of the options
      */
-    this.__options = options;
+    this.__options = options || {};
 
     /**
      * Those who extend this class will put their DOM elements in here.
@@ -300,6 +300,23 @@ dat.controllers.Controller = (function (common) {
          */
         getType: function() {
           return this.__type;
+        },
+
+        getOption: function(name) {
+          return this.__options[name];
+        },
+
+        setOption: function(name, value) {
+          this.__options[name] = value;
+        },
+
+        getReadonly: function() {
+          return this.getOption('readonly');
+        },
+
+        setReadonly: function(value) {
+          this.setOption('readonly', value);
+          this.updateDisplay();
         },
 
         /**
@@ -1238,9 +1255,9 @@ dat.controllers.BooleanController = (function (Controller, dom, common) {
    *
    * @member dat.controllers
    */
-  var BooleanController = function(name, value) {
+  var BooleanController = function(name, value, options) {
 
-    BooleanController.superclass.call(this, name, value, 'boolean');
+    BooleanController.superclass.call(this, name, value, 'boolean', options);
 
     var _this = this;
     this.__prev = this.getValue();
@@ -1290,6 +1307,8 @@ dat.controllers.BooleanController = (function (Controller, dom, common) {
               this.__checkbox.checked = false;
           }
 
+          this.__checkbox.disabled = this.getReadonly();
+
           return BooleanController.superclass.prototype.updateDisplay.call(this);
 
         }
@@ -1306,9 +1325,9 @@ dat.dom.dom,
 dat.utils.common),
 dat.controllers.ColorController = (function (Controller, dom, Color, interpret, common) {
 
-  var ColorController = function(name, value) {
+  var ColorController = function(name, value, options) {
 
-    ColorController.superclass.call(this, name, value, 'color');
+    ColorController.superclass.call(this, name, value, 'color', options);
 
     this.__color = new Color(this.getValue());
     this.__temp = new Color(0);
@@ -1353,6 +1372,9 @@ dat.controllers.ColorController = (function (Controller, dom, Color, interpret, 
     this.__input = document.createElement('input');
     this.__input.type = 'text';
     this.__input_textShadow = '0 1px 1px ';
+
+    this.__input_container = document.createElement('div');
+    this.__input_container.style.marginLeft = '28px';
 
     dom.bind(this.__input, 'keydown', function(e) {
       if (e.keyCode === 13) { // on enter
@@ -1467,12 +1489,7 @@ dat.controllers.ColorController = (function (Controller, dom, Color, interpret, 
     });
 
     this.__visible = false;
-    dom.bind(this.__swatch, 'click', function(e) {
-      _this.__visible = !_this.__visible;
-      common.extend(_this.__selector.style, {
-        display: _this.__visible ? '' : 'none'
-      });
-    });
+    dom.bind(this.__swatch, 'click', this.swatchClick);
 
     dom.bind(this.__saturation_field, 'mousedown', fieldDown);
     dom.bind(this.__field_knob, 'mousedown', fieldDown);
@@ -1488,6 +1505,14 @@ dat.controllers.ColorController = (function (Controller, dom, Color, interpret, 
       dom.bind(window, 'mousemove', setA);
       dom.bind(window, 'mouseup', unbindA);
     });
+
+    this.swatchClick = function() {
+      if (_this.getReadonly()) _this.__visible = false;
+      else _this.__visible = !_this.__visible;
+      common.extend(_this.__selector.style, {
+        display: _this.__visible ? '' : 'none'
+      });
+    };
 
     function fieldDown(e) {
       setSV(e);
@@ -1529,9 +1554,10 @@ dat.controllers.ColorController = (function (Controller, dom, Color, interpret, 
     this.__alpha_container.appendChild(this.__alpha_field);
     this.__alpha_field.appendChild(this.__alpha_knob);
     this.__swatch_container.appendChild(this.__swatch);
+    this.__input_container.appendChild(this.__input);
 
     this.el.appendChild(this.__swatch_container);
-    this.el.appendChild(this.__input);
+    this.el.appendChild(this.__input_container);
     this.el.appendChild(this.__selector);
 
     this.updateDisplay();
@@ -1623,6 +1649,11 @@ dat.controllers.ColorController = (function (Controller, dom, Color, interpret, 
 
       {
 
+        setReadonly: function(value) {
+          Controller.prototype.setReadonly(value);
+          this.swatchClick();
+        },
+
         updateDisplay: function() {
 
           var i = interpret(this.getValue());
@@ -1682,6 +1713,8 @@ dat.controllers.ColorController = (function (Controller, dom, Color, interpret, 
           common.extend(this.__swatch.style, {
             backgroundColor: this.__input.value = this.__color.toString()
           });
+
+          this.__input.disabled = this.getReadonly();
 
         }
 
@@ -1988,9 +2021,9 @@ dat.controllers.NumberController = (function (Controller, dom, common) {
    *
    * @member dat.controllers
    */
-  var NumberController = function(name, value, params) {
+  var NumberController = function(name, value, params, options) {
 
-    NumberController.superclass.call(this, name, value, 'number');
+    NumberController.superclass.call(this, name, value, 'number', options);
 
     if (typeof this.getValue() !== 'number') {
       throw 'Provided value is not a number';
@@ -2038,10 +2071,12 @@ dat.controllers.NumberController = (function (Controller, dom, common) {
     dom.bind(this.__increment_button, 'click', increment);
 
     function decrement() {
+      if (_this.getReadonly()) return;
       _this.setValue(_this.__value - _this.__step);
     }
 
     function increment() {
+      if (_this.getReadonly()) return;
       _this.setValue(_this.__value + _this.__step);
     }
 
@@ -2088,6 +2123,7 @@ dat.controllers.NumberController = (function (Controller, dom, common) {
 
         updateDisplay: function() {
           this.__input.value = this.getValue();
+          this.__input.disabled = this.getReadonly();
         },
 
         /**
@@ -2163,9 +2199,9 @@ dat.controllers.OptionController = (function (Controller, dom, common) {
    *
    * @member dat.controllers
    */
-  var OptionController = function(name, value, options, params) {
+  var OptionController = function(name, value, params, options) {
 
-    OptionController.superclass.call(this, name, value, 'option', params);
+    OptionController.superclass.call(this, name, value, 'option', options);
 
     var _this = this;
     this.CUSTOM_FLAG = '';
@@ -2181,15 +2217,15 @@ dat.controllers.OptionController = (function (Controller, dom, common) {
     this.__input = document.createElement('input');
     this.__input.setAttribute('type', 'text');
 
-    if (common.isArray(options)) {
+    if (common.isArray(params)) {
       var map = {};
-      common.each(options, function(element) {
+      common.each(params, function(element) {
         map[element] = element;
       });
-      options = map;
+      params = map;
     }
 
-    common.each(options, function(value, key) {
+    common.each(params, function(value, key) {
 
       var opt = document.createElement('option');
       opt.innerHTML = key;
@@ -2253,6 +2289,10 @@ dat.controllers.OptionController = (function (Controller, dom, common) {
           this.__select.value = custom ? this.CUSTOM_FLAG : value;
           this.__input.value = custom ? value : '';
           this.__input.style.display = custom ? 'block' : 'none';
+
+          this.__select.disabled = this.getReadonly();
+          this.__input.disabled = this.getReadonly();
+
           return OptionController.superclass.prototype.updateDisplay.call(this);
 
         }
@@ -2278,9 +2318,9 @@ dat.controllers.StringController = (function (Controller, dom, common) {
    *
    * @member dat.controllers
    */
-  var StringController = function(name, value) {
+  var StringController = function(name, value, options) {
 
-    StringController.superclass.call(this, name, value, 'string');
+    StringController.superclass.call(this, name, value, 'string', options);
 
     var _this = this;
 
@@ -2328,6 +2368,7 @@ dat.controllers.StringController = (function (Controller, dom, common) {
           if (!dom.isActive(this.__input)) {
             this.__input.value = this.getValue();
           }
+          this.__input.disabled = this.getReadonly();
           return StringController.superclass.prototype.updateDisplay.call(this);
         }
 
@@ -2382,9 +2423,9 @@ dat.controllers.UnitController = (function (Controller, dom, common) {
      *
      * @member dat.controllers
      */
-    var UnitController = function(name, value) {
+    var UnitController = function(name, value, options) {
 
-        UnitController.superclass.call(this, name, value, 'unit');
+        UnitController.superclass.call(this, name, value, 'unit', options);
 
         this.__unit = new Unit(this.getValue());
 
@@ -2434,6 +2475,9 @@ dat.controllers.UnitController = (function (Controller, dom, common) {
             updateDisplay: function() {
                 this.__input.value = this.__unit.num;
                 this.__select.value = this.__unit.unit;
+
+                this.__input.disabled = this.getReadonly();
+                this.__select.disabled = this.getReadonly();
             }
 
         }

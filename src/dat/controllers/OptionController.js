@@ -31,9 +31,9 @@ function(Controller, dom, common) {
    *
    * @member dat.controllers
    */
-  var OptionController = function(name, value, options, params) {
+  var OptionController = function(name, value, params, options) {
 
-    OptionController.superclass.call(this, name, value, 'option', params);
+    OptionController.superclass.call(this, name, value, 'option', options);
 
     var _this = this;
     this.CUSTOM_FLAG = '';
@@ -49,15 +49,15 @@ function(Controller, dom, common) {
     this.__input = document.createElement('input');
     this.__input.setAttribute('type', 'text');
 
-    if (common.isArray(options)) {
+    if (common.isArray(params)) {
       var map = {};
-      common.each(options, function(element) {
+      common.each(params, function(element) {
         map[element] = element;
       });
-      options = map;
+      params = map;
     }
 
-    common.each(options, function(value, key) {
+    common.each(params, function(value, key) {
 
       var opt = document.createElement('option');
       opt.innerHTML = key;
@@ -121,6 +121,10 @@ function(Controller, dom, common) {
           this.__select.value = custom ? this.CUSTOM_FLAG : value;
           this.__input.value = custom ? value : '';
           this.__input.style.display = custom ? 'block' : 'none';
+
+          this.__select.disabled = this.getReadonly();
+          this.__input.disabled = this.getReadonly();
+
           return OptionController.superclass.prototype.updateDisplay.call(this);
 
         }

@@ -44,7 +44,7 @@ define([
     /**
      * Keep track of the options
      */
-    this.__options = options;
+    this.__options = options || {};
 
     /**
      * Those who extend this class will put their DOM elements in here.
@@ -153,6 +153,23 @@ define([
          */
         getType: function() {
           return this.__type;
+        },
+
+        getOption: function(name) {
+          return this.__options[name];
+        },
+
+        setOption: function(name, value) {
+          this.__options[name] = value;
+        },
+
+        getReadonly: function() {
+          return this.getOption('readonly');
+        },
+
+        setReadonly: function(value) {
+          this.setOption('readonly', value);
+          this.updateDisplay();
         },
 
         /**

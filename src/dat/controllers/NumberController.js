@@ -31,9 +31,9 @@ define([
    *
    * @member dat.controllers
    */
-  var NumberController = function(name, value, params) {
+  var NumberController = function(name, value, params, options) {
 
-    NumberController.superclass.call(this, name, value, 'number');
+    NumberController.superclass.call(this, name, value, 'number', options);
 
     if (typeof this.getValue() !== 'number') {
       throw 'Provided value is not a number';
@@ -81,10 +81,12 @@ define([
     dom.bind(this.__increment_button, 'click', increment);
 
     function decrement() {
+      if (_this.getReadonly()) return;
       _this.setValue(_this.__value - _this.__step);
     }
 
     function increment() {
+      if (_this.getReadonly()) return;
       _this.setValue(_this.__value + _this.__step);
     }
 
@@ -131,6 +133,7 @@ define([
 
         updateDisplay: function() {
           this.__input.value = this.getValue();
+          this.__input.disabled = this.getReadonly();
         },
 
         /**

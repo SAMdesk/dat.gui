@@ -19,9 +19,9 @@ define([
   'dat/utils/common'
 ], function(Controller, dom, Color, interpret, common) {
 
-  var ColorController = function(name, value) {
+  var ColorController = function(name, value, options) {
 
-    ColorController.superclass.call(this, name, value, 'color');
+    ColorController.superclass.call(this, name, value, 'color', options);
 
     this.__color = new Color(this.getValue());
     this.__temp = new Color(0);
@@ -66,6 +66,9 @@ define([
     this.__input = document.createElement('input');
     this.__input.type = 'text';
     this.__input_textShadow = '0 1px 1px ';
+
+    this.__input_container = document.createElement('div');
+    this.__input_container.style.marginLeft = '28px';
 
     dom.bind(this.__input, 'keydown', function(e) {
       if (e.keyCode === 13) { // on enter
@@ -180,12 +183,7 @@ define([
     });
 
     this.__visible = false;
-    dom.bind(this.__swatch, 'click', function(e) {
-      _this.__visible = !_this.__visible;
-      common.extend(_this.__selector.style, {
-        display: _this.__visible ? '' : 'none'
-      });
-    });
+    dom.bind(this.__swatch, 'click', this.swatchClick);
 
     dom.bind(this.__saturation_field, 'mousedown', fieldDown);
     dom.bind(this.__field_knob, 'mousedown', fieldDown);
@@ -201,6 +199,14 @@ define([
       dom.bind(window, 'mousemove', setA);
       dom.bind(window, 'mouseup', unbindA);
     });
+
+    this.swatchClick = function() {
+      if (_this.getReadonly()) _this.__visible = false;
+      else _this.__visible = !_this.__visible;
+      common.extend(_this.__selector.style, {
+        display: _this.__visible ? '' : 'none'
+      });
+    };
 
     function fieldDown(e) {
       setSV(e);
@@ -242,9 +248,10 @@ define([
     this.__alpha_container.appendChild(this.__alpha_field);
     this.__alpha_field.appendChild(this.__alpha_knob);
     this.__swatch_container.appendChild(this.__swatch);
+    this.__input_container.appendChild(this.__input);
 
     this.el.appendChild(this.__swatch_container);
-    this.el.appendChild(this.__input);
+    this.el.appendChild(this.__input_container);
     this.el.appendChild(this.__selector);
 
     this.updateDisplay();
@@ -336,6 +343,11 @@ define([
 
       {
 
+        setReadonly: function(value) {
+          Controller.prototype.setReadonly(value);
+          this.swatchClick();
+        },
+
         updateDisplay: function() {
 
           var i = interpret(this.getValue());
@@ -395,6 +407,8 @@ define([
           common.extend(this.__swatch.style, {
             backgroundColor: this.__input.value = this.__color.toString()
           });
+
+          this.__input.disabled = this.getReadonly();
 
         }
 
