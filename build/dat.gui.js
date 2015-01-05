@@ -278,9 +278,11 @@ dat.controllers.Controller = (function (common) {
 
         /**
          * Resets the value of <code>__value</code> to that of <code>__initalValue</code>
+         *
+         * @param {Boolean} quiet If true, don't call the onChange handler
          */
-        resetValue: function() {
-          this.setValue(this.__initialValue);
+        resetValue: function(quiet) {
+          this.setValue(this.__initialValue, quiet);
         },
 
         /**
@@ -297,11 +299,12 @@ dat.controllers.Controller = (function (common) {
          * Change the value of <code>__value</code>
          *
          * @param {Object} value The new value of <code>__value</code>
+         * @param {Boolean} quiet If true, don't call the onChange handler
          */
-        setValue: function(value) {
+        setValue: function(value, quiet) {
           if (value != this.__value) {
             this.__value = value;
-            if (this.__onChange) {
+            if (this.__onChange && !quiet) {
               this.__onChange.call(this, value);
             }
           }
