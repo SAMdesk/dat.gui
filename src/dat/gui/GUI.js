@@ -146,6 +146,9 @@ define([
       dom.addClass(title_row_name, 'controller-name');
 
       var title_row = addRow(_this, title_row_name);
+      var caret = document.createElement('div');
+      caret.className = 'caret-down';
+      title_row.appendChild(caret);
 
       var on_click_title = function(e) {
         e.preventDefault();
