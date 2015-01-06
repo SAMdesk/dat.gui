@@ -152,12 +152,12 @@ define([
          * Change the value of <code>__value</code>
          *
          * @param {Object} value The new value of <code>__value</code>
-         * @param {Boolean} quiet If true, don't call the onChange handler
+         * @param {Boolean} silent If true, don't call the onChange handler
          */
-        setValue: function(value, quiet) {
+        setValue: function(value, silent) {
           if (value != this.__value) {
             this.__value = value;
-            if (this.__onChange && !quiet) {
+            if (this.__onChange && !silent) {
               this.__onChange.call(this, value);
             }
           }

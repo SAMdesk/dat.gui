@@ -299,12 +299,12 @@ dat.controllers.Controller = (function (common) {
          * Change the value of <code>__value</code>
          *
          * @param {Object} value The new value of <code>__value</code>
-         * @param {Boolean} quiet If true, don't call the onChange handler
+         * @param {Boolean} silent If true, don't call the onChange handler
          */
-        setValue: function(value, quiet) {
+        setValue: function(value, silent) {
           if (value != this.__value) {
             this.__value = value;
-            if (this.__onChange && !quiet) {
+            if (this.__onChange && !silent) {
               this.__onChange.call(this, value);
             }
           }
@@ -999,6 +999,83 @@ dat.color.interpret = (function (toString, common) {
 
 
 })(dat.color.toString,
+dat.utils.common);
+
+
+dat.controllers.StringController = (function (Controller, dom, common) {
+
+  /**
+   * @class Provides a text input to alter the string property of an object.
+   *
+   * @extends dat.controllers.Controller
+   *
+   * @param {Object} object The object to be manipulated
+   * @param {string} property The name of the property to be manipulated
+   *
+   * @member dat.controllers
+   */
+  var StringController = function(name, value, options) {
+
+    StringController.superclass.call(this, name, value, 'string', options);
+
+    var _this = this;
+
+    this.__input = document.createElement('input');
+    this.__input.setAttribute('type', 'text');
+
+    dom.bind(this.__input, 'keyup', onChange);
+    dom.bind(this.__input, 'change', onChange);
+    dom.bind(this.__input, 'blur', onBlur);
+    dom.bind(this.__input, 'keydown', function(e) {
+      if (e.keyCode === 13) {
+        this.blur();
+      }
+    });
+    
+
+    function onChange() {
+      _this.setValue(_this.__input.value);
+    }
+
+    function onBlur() {
+      if (_this.__onFinishChange) {
+        _this.__onFinishChange.call(_this, _this.getValue());
+      }
+    }
+
+    this.updateDisplay();
+
+    this.el.appendChild(this.__input);
+
+  };
+
+  StringController.superclass = Controller;
+
+  common.extend(
+
+      StringController.prototype,
+      Controller.prototype,
+
+      {
+
+        updateDisplay: function() {
+          // Stops the caret from moving on account of:
+          // keyup -> setValue -> updateDisplay
+          if (!dom.isActive(this.__input)) {
+            this.__input.value = this.getValue();
+          }
+          this.__input.disabled = this.getReadonly();
+          return StringController.superclass.prototype.updateDisplay.call(this);
+        }
+
+      }
+
+  );
+
+  return StringController;
+
+})(dat.controllers.Controller,
+dat.dom.dom,
 dat.utils.common);
 
 
@@ -2235,7 +2312,7 @@ dat.controllers.NumberController = (function (Controller, dom, common) {
 })(dat.controllers.Controller,
 dat.dom.dom,
 dat.utils.common),
-dat.controllers.OptionController = (function (Controller, dom, common) {
+dat.controllers.OptionController = (function (Controller, StringController, dom, common) {
 
   /**
    * @class Provides a select input to alter the property of an object, using a
@@ -2265,9 +2342,6 @@ dat.controllers.OptionController = (function (Controller, dom, common) {
      */
     this.__select = document.createElement('select');
 
-    this.__input = document.createElement('input');
-    this.__input.setAttribute('type', 'text');
-
     this.__arrow = document.createElement('label');
     this.__arrow.className = 'caret-down';
 
@@ -2288,11 +2362,13 @@ dat.controllers.OptionController = (function (Controller, dom, common) {
 
     });
 
-    if (params.custom) {
+    if (options.custom) {
       var opt = document.createElement('option');
-      opt.innerHTML = 'Custom';
+      opt.innerHTML = options.custom.display || 'Custom';
       opt.setAttribute('value', _this.CUSTOM_FLAG);
       _this.__select.appendChild(opt);
+
+      this.__custom_controller = options.custom.controller || new StringController('', '', options);
     }
 
     // Acknowledge original value
@@ -2300,18 +2376,23 @@ dat.controllers.OptionController = (function (Controller, dom, common) {
 
     dom.bind(this.__select, 'change', function() {
       var value = this.options[this.selectedIndex].value;
+      if (value == _this.CUSTOM_FLAG)
+        value = _this.__custom_controller.getValue();
       _this.setValue(value);
     });
 
-    dom.bind(this.__input, 'change', function() {
-      var value = this.value;
-      _this.setValue(value);
-    });
+    if (this.__custom_controller) {
+      this.__custom_controller.onChange(function() {
+        var value = this.getValue();
+        _this.setValue(value);
+      });
+    }
 
     this.el.appendChild(this.__select);
-    this.el.appendChild(this.__input);
     this.el.appendChild(this.__arrow);
-
+    if (this.__custom_controller) {
+      this.el.appendChild(this.__custom_controller.el);
+    }
   };
 
   OptionController.superclass = Controller;
@@ -2342,11 +2423,12 @@ dat.controllers.OptionController = (function (Controller, dom, common) {
           }
 
           this.__select.value = custom ? this.CUSTOM_FLAG : value;
-          this.__input.value = custom ? value : '';
-          this.__input.style.display = custom ? 'block' : 'none';
-
           this.__select.disabled = this.getReadonly();
-          this.__input.disabled = this.getReadonly();
+
+          if (this.__custom_controller) {
+            this.__custom_controller.el.style.display = custom ? 'block' : 'none';
+            this.__custom_controller.setReadonly(this.getReadonly());
+          }
 
           return OptionController.superclass.prototype.updateDisplay.call(this);
 
@@ -2359,83 +2441,10 @@ dat.controllers.OptionController = (function (Controller, dom, common) {
   return OptionController;
 
 })(dat.controllers.Controller,
+dat.controllers.StringController,
 dat.dom.dom,
 dat.utils.common),
-dat.controllers.StringController = (function (Controller, dom, common) {
-
-  /**
-   * @class Provides a text input to alter the string property of an object.
-   *
-   * @extends dat.controllers.Controller
-   *
-   * @param {Object} object The object to be manipulated
-   * @param {string} property The name of the property to be manipulated
-   *
-   * @member dat.controllers
-   */
-  var StringController = function(name, value, options) {
-
-    StringController.superclass.call(this, name, value, 'string', options);
-
-    var _this = this;
-
-    this.__input = document.createElement('input');
-    this.__input.setAttribute('type', 'text');
-
-    dom.bind(this.__input, 'keyup', onChange);
-    dom.bind(this.__input, 'change', onChange);
-    dom.bind(this.__input, 'blur', onBlur);
-    dom.bind(this.__input, 'keydown', function(e) {
-      if (e.keyCode === 13) {
-        this.blur();
-      }
-    });
-    
-
-    function onChange() {
-      _this.setValue(_this.__input.value);
-    }
-
-    function onBlur() {
-      if (_this.__onFinishChange) {
-        _this.__onFinishChange.call(_this, _this.getValue());
-      }
-    }
-
-    this.updateDisplay();
-
-    this.el.appendChild(this.__input);
-
-  };
-
-  StringController.superclass = Controller;
-
-  common.extend(
-
-      StringController.prototype,
-      Controller.prototype,
-
-      {
-
-        updateDisplay: function() {
-          // Stops the caret from moving on account of:
-          // keyup -> setValue -> updateDisplay
-          if (!dom.isActive(this.__input)) {
-            this.__input.value = this.getValue();
-          }
-          this.__input.disabled = this.getReadonly();
-          return StringController.superclass.prototype.updateDisplay.call(this);
-        }
-
-      }
-
-  );
-
-  return StringController;
-
-})(dat.controllers.Controller,
-dat.dom.dom,
-dat.utils.common),
+dat.controllers.StringController,
 dat.controllers.UnitController = (function (Controller, dom, common) {
 
     var units = ['px', 'em', 'pt'];
