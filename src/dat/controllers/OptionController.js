@@ -95,7 +95,11 @@ function(Controller, dom, common) {
     this.el.appendChild(this.__select);
     this.el.appendChild(this.__arrow);
     if (this.__custom_controller) {
-      this.el.appendChild(this.__custom_controller.el);
+      var custom_container = document.createElement('div');
+      dom.addClass(custom_container, 'cr');
+      dom.addClass(custom_container, this.__custom_controller.getType());
+      custom_container.appendChild(this.__custom_controller.el);
+      this.el.appendChild(custom_container);
     }
   };
 

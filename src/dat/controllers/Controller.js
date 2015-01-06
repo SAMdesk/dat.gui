@@ -12,8 +12,9 @@
  */
 
 define([
-   'dat/utils/common'
-], function(common) {
+  'dat/dom/dom',
+  'dat/utils/common'
+], function(dom, common) {
 
   /**
    * @class An "abstract" class that represents a given property of an object.
@@ -52,6 +53,7 @@ define([
      * @type {DOMElement}
      */
     this.el = document.createElement('div');
+    dom.addClass(this.el, 'c');
 
     /**
      * The function to be called on change.

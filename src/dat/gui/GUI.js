@@ -246,8 +246,6 @@ define([
 
   function add(gui, controller) {
 
-    dom.addClass(controller.el, 'c');
-
     var name = document.createElement('span');
     dom.addClass(name, 'property-name');
     name.innerHTML = controller.getName();

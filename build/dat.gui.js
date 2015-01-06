@@ -160,223 +160,6 @@ dat.utils.common = (function () {
 })();
 
 
-dat.controllers.Controller = (function (common) {
-
-  /**
-   * @class An "abstract" class that represents a given property of an object.
-   *
-   * @param {Object} object The object to be manipulated
-   * @param {string} property The name of the property to be manipulated
-   *
-   * @member dat.controllers
-   */
-  var Controller = function(name, value, type, options) {
-
-    /**
-     * Keep track of the property name
-     */
-    this.__name = name;
-
-    /**
-     * Keep track of the initial and current Controller values
-     */
-    this.__value = value;
-    this.__prevValue = value;
-    this.__initialValue = value;
-
-    /**
-     * Keep track of the type of Controller for style purposes
-     */
-    this.__type = type;
-
-    /**
-     * Keep track of the options
-     */
-    this.__options = options || {};
-
-    /**
-     * Those who extend this class will put their DOM elements in here.
-     * @type {DOMElement}
-     */
-    this.el = document.createElement('div');
-
-    /**
-     * The function to be called on change.
-     * @type {Function}
-     * @ignore
-     */
-    this.__onChange = undefined;
-
-    /**
-     * The function to be called on finishing change.
-     * @type {Function}
-     * @ignore
-     */
-    this.__onFinishChange = undefined;
-
-    this.__onReadonlyChange = undefined;
-
-  };
-
-  common.extend(
-
-      Controller.prototype,
-
-      /** @lends dat.controllers.Controller.prototype */
-      {
-
-        /**
-         * Specify that a function fire every time someone changes the value with
-         * this Controller.
-         *
-         * @param {Function} fnc This function will be called whenever the value
-         * is modified via this Controller.
-         * @returns {dat.controllers.Controller} this
-         */
-        onChange: function(fnc) {
-          this.__onChange = fnc;
-          return this;
-        },
-
-        /**
-         * Specify that a function fire every time someone "finishes" changing
-         * the value wih this Controller. Useful for values that change
-         * incrementally like numbers or strings.
-         *
-         * @param {Function} fnc This function will be called whenever
-         * someone "finishes" changing the value via this Controller.
-         * @returns {dat.controllers.Controller} this
-         */
-        onFinishChange: function(fnc) {
-          this.__onFinishChange = fnc;
-          return this;
-        },
-
-        onReadonlyChange: function(fnc) {
-          this.__onReadonlyChange = fnc;
-          return this;
-        },
-
-        /**
-         * Gets the value of <code>__name</code>
-         *
-         * @returns {Object} The current value of <code>__name</code>
-         */
-        getName: function() {
-          return this.__name;
-        },
-
-        /**
-         * Change the value of <code>__prevValue</code>
-         *
-         * @param {Object} value The new value of <code>__prevValue</code>
-         */
-        setPrevValue: function(value) {
-          this.__prevValue = value;
-          return this;
-        },
-
-        /**
-         * Resets the value of <code>__value</code> to that of <code>__initalValue</code>
-         *
-         * @param {Boolean} quiet If true, don't call the onChange handler
-         */
-        resetValue: function(quiet) {
-          this.setValue(this.__initialValue, quiet);
-        },
-
-        /**
-         * Change the value of <code>__initialValue</code>
-         *
-         * @param {Object} value The new value of <code>__initialValue</code>
-         */
-        setInitialValue: function(value) {
-          this.__initialValue = value;
-          return this;
-        },
-
-        /**
-         * Change the value of <code>__value</code>
-         *
-         * @param {Object} value The new value of <code>__value</code>
-         * @param {Boolean} silent If true, don't call the onChange handler
-         */
-        setValue: function(value, silent) {
-          if (value != this.__value) {
-            this.__value = value;
-            if (this.__onChange && !silent) {
-              this.__onChange.call(this, value);
-            }
-          }
-          this.updateDisplay();
-          return this;
-        },
-
-        /**
-         * Gets the value of <code>__value</code>
-         *
-         * @returns {Object} The current value of <code>__value</code>
-         */
-        getValue: function() {
-          return this.__value;
-        },
-
-        /**
-         * Gets the value of <code>__type</code>
-         *
-         * @returns {String} The current value of <code>__type</code>
-         */
-        getType: function() {
-          return this.__type;
-        },
-
-        getOption: function(name) {
-          return this.__options[name];
-        },
-
-        setOption: function(name, value) {
-          this.__options[name] = value;
-        },
-
-        getReadonly: function() {
-          return this.getOption('readonly');
-        },
-
-        setReadonly: function(value) {
-          this.setOption('readonly', value);
-          if (this.__onReadonlyChange) {
-            this.__onReadonlyChange.call(this, value);
-          }
-          this.updateDisplay();
-          return this;
-        },
-
-        /**
-         * Refreshes the visual display of a Controller in order to keep sync
-         * with the object's current value.
-         * @returns {dat.controllers.Controller} this
-         */
-        updateDisplay: function() {
-          return this;
-        },
-
-        /**
-         * @returns {Boolean} true if the value has deviated from prevValue
-         */
-        isModified: function() {
-          return this.__prevValue !== this.getValue()
-        }
-
-      }
-
-  );
-
-  return Controller;
-
-
-})(dat.utils.common);
-
-
 dat.dom.dom = (function (common) {
 
   var EVENT_MAP = {
@@ -649,6 +432,225 @@ dat.dom.dom = (function (common) {
   return dom;
 
 })(dat.utils.common);
+
+
+dat.controllers.Controller = (function (dom, common) {
+
+  /**
+   * @class An "abstract" class that represents a given property of an object.
+   *
+   * @param {Object} object The object to be manipulated
+   * @param {string} property The name of the property to be manipulated
+   *
+   * @member dat.controllers
+   */
+  var Controller = function(name, value, type, options) {
+
+    /**
+     * Keep track of the property name
+     */
+    this.__name = name;
+
+    /**
+     * Keep track of the initial and current Controller values
+     */
+    this.__value = value;
+    this.__prevValue = value;
+    this.__initialValue = value;
+
+    /**
+     * Keep track of the type of Controller for style purposes
+     */
+    this.__type = type;
+
+    /**
+     * Keep track of the options
+     */
+    this.__options = options || {};
+
+    /**
+     * Those who extend this class will put their DOM elements in here.
+     * @type {DOMElement}
+     */
+    this.el = document.createElement('div');
+    dom.addClass(this.el, 'c');
+
+    /**
+     * The function to be called on change.
+     * @type {Function}
+     * @ignore
+     */
+    this.__onChange = undefined;
+
+    /**
+     * The function to be called on finishing change.
+     * @type {Function}
+     * @ignore
+     */
+    this.__onFinishChange = undefined;
+
+    this.__onReadonlyChange = undefined;
+
+  };
+
+  common.extend(
+
+      Controller.prototype,
+
+      /** @lends dat.controllers.Controller.prototype */
+      {
+
+        /**
+         * Specify that a function fire every time someone changes the value with
+         * this Controller.
+         *
+         * @param {Function} fnc This function will be called whenever the value
+         * is modified via this Controller.
+         * @returns {dat.controllers.Controller} this
+         */
+        onChange: function(fnc) {
+          this.__onChange = fnc;
+          return this;
+        },
+
+        /**
+         * Specify that a function fire every time someone "finishes" changing
+         * the value wih this Controller. Useful for values that change
+         * incrementally like numbers or strings.
+         *
+         * @param {Function} fnc This function will be called whenever
+         * someone "finishes" changing the value via this Controller.
+         * @returns {dat.controllers.Controller} this
+         */
+        onFinishChange: function(fnc) {
+          this.__onFinishChange = fnc;
+          return this;
+        },
+
+        onReadonlyChange: function(fnc) {
+          this.__onReadonlyChange = fnc;
+          return this;
+        },
+
+        /**
+         * Gets the value of <code>__name</code>
+         *
+         * @returns {Object} The current value of <code>__name</code>
+         */
+        getName: function() {
+          return this.__name;
+        },
+
+        /**
+         * Change the value of <code>__prevValue</code>
+         *
+         * @param {Object} value The new value of <code>__prevValue</code>
+         */
+        setPrevValue: function(value) {
+          this.__prevValue = value;
+          return this;
+        },
+
+        /**
+         * Resets the value of <code>__value</code> to that of <code>__initalValue</code>
+         *
+         * @param {Boolean} quiet If true, don't call the onChange handler
+         */
+        resetValue: function(quiet) {
+          this.setValue(this.__initialValue, quiet);
+        },
+
+        /**
+         * Change the value of <code>__initialValue</code>
+         *
+         * @param {Object} value The new value of <code>__initialValue</code>
+         */
+        setInitialValue: function(value) {
+          this.__initialValue = value;
+          return this;
+        },
+
+        /**
+         * Change the value of <code>__value</code>
+         *
+         * @param {Object} value The new value of <code>__value</code>
+         * @param {Boolean} silent If true, don't call the onChange handler
+         */
+        setValue: function(value, silent) {
+          if (value != this.__value) {
+            this.__value = value;
+            if (this.__onChange && !silent) {
+              this.__onChange.call(this, value);
+            }
+          }
+          this.updateDisplay();
+          return this;
+        },
+
+        /**
+         * Gets the value of <code>__value</code>
+         *
+         * @returns {Object} The current value of <code>__value</code>
+         */
+        getValue: function() {
+          return this.__value;
+        },
+
+        /**
+         * Gets the value of <code>__type</code>
+         *
+         * @returns {String} The current value of <code>__type</code>
+         */
+        getType: function() {
+          return this.__type;
+        },
+
+        getOption: function(name) {
+          return this.__options[name];
+        },
+
+        setOption: function(name, value) {
+          this.__options[name] = value;
+        },
+
+        getReadonly: function() {
+          return this.getOption('readonly');
+        },
+
+        setReadonly: function(value) {
+          this.setOption('readonly', value);
+          if (this.__onReadonlyChange) {
+            this.__onReadonlyChange.call(this, value);
+          }
+          this.updateDisplay();
+          return this;
+        },
+
+        /**
+         * Refreshes the visual display of a Controller in order to keep sync
+         * with the object's current value.
+         * @returns {dat.controllers.Controller} this
+         */
+        updateDisplay: function() {
+          return this;
+        },
+
+        /**
+         * @returns {Boolean} true if the value has deviated from prevValue
+         */
+        isModified: function() {
+          return this.__prevValue !== this.getValue()
+        }
+
+      }
+
+  );
+
+  return Controller;
+
+
+})(dat.dom.dom,
+dat.utils.common);
 
 
 dat.color.toString = (function (common) {
@@ -1002,83 +1004,6 @@ dat.color.interpret = (function (toString, common) {
 dat.utils.common);
 
 
-dat.controllers.StringController = (function (Controller, dom, common) {
-
-  /**
-   * @class Provides a text input to alter the string property of an object.
-   *
-   * @extends dat.controllers.Controller
-   *
-   * @param {Object} object The object to be manipulated
-   * @param {string} property The name of the property to be manipulated
-   *
-   * @member dat.controllers
-   */
-  var StringController = function(name, value, options) {
-
-    StringController.superclass.call(this, name, value, 'string', options);
-
-    var _this = this;
-
-    this.__input = document.createElement('input');
-    this.__input.setAttribute('type', 'text');
-
-    dom.bind(this.__input, 'keyup', onChange);
-    dom.bind(this.__input, 'change', onChange);
-    dom.bind(this.__input, 'blur', onBlur);
-    dom.bind(this.__input, 'keydown', function(e) {
-      if (e.keyCode === 13) {
-        this.blur();
-      }
-    });
-    
-
-    function onChange() {
-      _this.setValue(_this.__input.value);
-    }
-
-    function onBlur() {
-      if (_this.__onFinishChange) {
-        _this.__onFinishChange.call(_this, _this.getValue());
-      }
-    }
-
-    this.updateDisplay();
-
-    this.el.appendChild(this.__input);
-
-  };
-
-  StringController.superclass = Controller;
-
-  common.extend(
-
-      StringController.prototype,
-      Controller.prototype,
-
-      {
-
-        updateDisplay: function() {
-          // Stops the caret from moving on account of:
-          // keyup -> setValue -> updateDisplay
-          if (!dom.isActive(this.__input)) {
-            this.__input.value = this.getValue();
-          }
-          this.__input.disabled = this.getReadonly();
-          return StringController.superclass.prototype.updateDisplay.call(this);
-        }
-
-      }
-
-  );
-
-  return StringController;
-
-})(dat.controllers.Controller,
-dat.dom.dom,
-dat.utils.common);
-
-
 dat.GUI = dat.gui.GUI = (function (css, styleSheet, Controller, BooleanController, ColorController, NumberController, OptionController, StringController, UnitController, dom, common) {
 
   //css.inject(styleSheet);
@@ -1297,8 +1222,6 @@ dat.GUI = dat.gui.GUI = (function (css, styleSheet, Controller, BooleanControlle
   );
 
   function add(gui, controller) {
-
-    dom.addClass(controller.el, 'c');
 
     var name = document.createElement('span');
     dom.addClass(name, 'property-name');
@@ -2312,7 +2235,7 @@ dat.controllers.NumberController = (function (Controller, dom, common) {
 })(dat.controllers.Controller,
 dat.dom.dom,
 dat.utils.common),
-dat.controllers.OptionController = (function (Controller, StringController, dom, common) {
+dat.controllers.OptionController = (function (Controller, dom, common) {
 
   /**
    * @class Provides a select input to alter the property of an object, using a
@@ -2368,7 +2291,7 @@ dat.controllers.OptionController = (function (Controller, StringController, dom,
       opt.setAttribute('value', _this.CUSTOM_FLAG);
       _this.__select.appendChild(opt);
 
-      this.__custom_controller = options.custom.controller || new StringController('', '', options);
+      this.__custom_controller = options.custom.controller;
     }
 
     // Acknowledge original value
@@ -2391,7 +2314,11 @@ dat.controllers.OptionController = (function (Controller, StringController, dom,
     this.el.appendChild(this.__select);
     this.el.appendChild(this.__arrow);
     if (this.__custom_controller) {
-      this.el.appendChild(this.__custom_controller.el);
+      var custom_container = document.createElement('div');
+      dom.addClass(custom_container, 'cr');
+      dom.addClass(custom_container, this.__custom_controller.getType());
+      custom_container.appendChild(this.__custom_controller.el);
+      this.el.appendChild(custom_container);
     }
   };
 
@@ -2441,10 +2368,83 @@ dat.controllers.OptionController = (function (Controller, StringController, dom,
   return OptionController;
 
 })(dat.controllers.Controller,
-dat.controllers.StringController,
 dat.dom.dom,
 dat.utils.common),
-dat.controllers.StringController,
+dat.controllers.StringController = (function (Controller, dom, common) {
+
+  /**
+   * @class Provides a text input to alter the string property of an object.
+   *
+   * @extends dat.controllers.Controller
+   *
+   * @param {Object} object The object to be manipulated
+   * @param {string} property The name of the property to be manipulated
+   *
+   * @member dat.controllers
+   */
+  var StringController = function(name, value, options) {
+
+    StringController.superclass.call(this, name, value, 'string', options);
+
+    var _this = this;
+
+    this.__input = document.createElement('input');
+    this.__input.setAttribute('type', 'text');
+
+    dom.bind(this.__input, 'keyup', onChange);
+    dom.bind(this.__input, 'change', onChange);
+    dom.bind(this.__input, 'blur', onBlur);
+    dom.bind(this.__input, 'keydown', function(e) {
+      if (e.keyCode === 13) {
+        this.blur();
+      }
+    });
+    
+
+    function onChange() {
+      _this.setValue(_this.__input.value);
+    }
+
+    function onBlur() {
+      if (_this.__onFinishChange) {
+        _this.__onFinishChange.call(_this, _this.getValue());
+      }
+    }
+
+    this.updateDisplay();
+
+    this.el.appendChild(this.__input);
+
+  };
+
+  StringController.superclass = Controller;
+
+  common.extend(
+
+      StringController.prototype,
+      Controller.prototype,
+
+      {
+
+        updateDisplay: function() {
+          // Stops the caret from moving on account of:
+          // keyup -> setValue -> updateDisplay
+          if (!dom.isActive(this.__input)) {
+            this.__input.value = this.getValue();
+          }
+          this.__input.disabled = this.getReadonly();
+          return StringController.superclass.prototype.updateDisplay.call(this);
+        }
+
+      }
+
+  );
+
+  return StringController;
+
+})(dat.controllers.Controller,
+dat.dom.dom,
+dat.utils.common),
 dat.controllers.UnitController = (function (Controller, dom, common) {
 
     var units = ['px', 'em', 'pt'];
