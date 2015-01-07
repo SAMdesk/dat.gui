@@ -111,6 +111,7 @@ define([
         {
 
             updateDisplay: function() {
+                this.__unit = new Unit(this.getValue());
                 this.__input.value = this.__unit.num;
                 this.__select.value = this.__unit.unit;
 

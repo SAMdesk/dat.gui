@@ -134,10 +134,10 @@ define([
         /**
          * Resets the value of <code>__value</code> to that of <code>__initalValue</code>
          *
-         * @param {Boolean} quiet If true, don't call the onChange handler
+         * @param {Boolean} silent If true, don't call the onChange handler
          */
-        resetValue: function(quiet) {
-          this.setValue(this.__initialValue, quiet);
+        resetValue: function(silent) {
+          this.setValue(this.__initialValue, silent);
         },
 
         /**

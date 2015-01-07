@@ -45,9 +45,11 @@ function(Controller, dom, common) {
      * @ignore
      */
     this.__select = document.createElement('select');
+    this.__overlay = document.createElement('div');
+    dom.addClass(this.__overlay, 'overlay');
 
     this.__arrow = document.createElement('label');
-    this.__arrow.className = 'caret-down';
+    dom.addClass(this.__arrow, 'caret-down');
 
     if (common.isArray(params)) {
       var map = {};
@@ -101,6 +103,7 @@ function(Controller, dom, common) {
       custom_container.appendChild(this.__custom_controller.el);
       this.el.appendChild(custom_container);
     }
+    this.el.appendChild(this.__overlay);
   };
 
   OptionController.superclass = Controller;

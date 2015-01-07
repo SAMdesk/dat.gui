@@ -255,11 +255,21 @@ define([
       toggle.style.float = 'right';
       toggle.innerHTML = controller.getReadonly() ? 'edit' : 'x';
 
-      dom.bind(toggle, 'click', function() {
+      var toggleReadonly = function() {
         var readonly = !controller.getReadonly();
         controller.setReadonly(readonly);
         toggle.innerHTML = readonly ? 'edit' : 'x';
         if (readonly) controller.resetValue();
+      };
+
+      dom.bind(toggle, 'click', function() {
+        toggleReadonly();
+      });
+
+      dom.bind(controller.el, 'click', function() {
+        if (controller.getReadonly()) {
+          toggleReadonly();
+        }
       });
 
       name.appendChild(toggle);

@@ -554,10 +554,10 @@ dat.controllers.Controller = (function (dom, common) {
         /**
          * Resets the value of <code>__value</code> to that of <code>__initalValue</code>
          *
-         * @param {Boolean} quiet If true, don't call the onChange handler
+         * @param {Boolean} silent If true, don't call the onChange handler
          */
-        resetValue: function(quiet) {
-          this.setValue(this.__initialValue, quiet);
+        resetValue: function(silent) {
+          this.setValue(this.__initialValue, silent);
         },
 
         /**
@@ -1232,11 +1232,21 @@ dat.GUI = dat.gui.GUI = (function (css, styleSheet, Controller, BooleanControlle
       toggle.style.float = 'right';
       toggle.innerHTML = controller.getReadonly() ? 'edit' : 'x';
 
-      dom.bind(toggle, 'click', function() {
+      var toggleReadonly = function() {
         var readonly = !controller.getReadonly();
         controller.setReadonly(readonly);
         toggle.innerHTML = readonly ? 'edit' : 'x';
         if (readonly) controller.resetValue();
+      };
+
+      dom.bind(toggle, 'click', function() {
+        toggleReadonly();
+      });
+
+      dom.bind(controller.el, 'click', function() {
+        if (controller.getReadonly()) {
+          toggleReadonly();
+        }
       });
 
       name.appendChild(toggle);
@@ -2264,9 +2274,11 @@ dat.controllers.OptionController = (function (Controller, dom, common) {
      * @ignore
      */
     this.__select = document.createElement('select');
+    this.__overlay = document.createElement('div');
+    dom.addClass(this.__overlay, 'overlay');
 
     this.__arrow = document.createElement('label');
-    this.__arrow.className = 'caret-down';
+    dom.addClass(this.__arrow, 'caret-down');
 
     if (common.isArray(params)) {
       var map = {};
@@ -2320,6 +2332,7 @@ dat.controllers.OptionController = (function (Controller, dom, common) {
       custom_container.appendChild(this.__custom_controller.el);
       this.el.appendChild(custom_container);
     }
+    this.el.appendChild(this.__overlay);
   };
 
   OptionController.superclass = Controller;
@@ -2541,6 +2554,7 @@ dat.controllers.UnitController = (function (Controller, dom, common) {
         {
 
             updateDisplay: function() {
+                this.__unit = new Unit(this.getValue());
                 this.__input.value = this.__unit.num;
                 this.__select.value = this.__unit.unit;
 
