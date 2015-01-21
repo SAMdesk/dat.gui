@@ -59,7 +59,6 @@ define([
      */
     this.el = document.createElement('div');
     this.__ul = document.createElement('ul');
-    this.el.appendChild(this.__ul);
 
     dom.addClass(this.el, CSS_NAMESPACE);
 
@@ -143,12 +142,15 @@ define([
       params.closed = false;
 
       var title_row_name = document.createTextNode(params.name);
-      dom.addClass(title_row_name, 'controller-name');
 
-      var title_row = addRow(_this, title_row_name);
+      var title_row = document.createElement('div');
+      title_row.appendChild(title_row_name);
+
       var caret = document.createElement('div');
-      caret.className = 'caret-down';
+      dom.addClass(caret, 'caret-down');
       title_row.appendChild(caret);
+
+      this.el.appendChild(title_row);
 
       var on_click_title = function(e) {
         e.preventDefault();
@@ -164,6 +166,8 @@ define([
       }
 
     }
+
+    this.el.appendChild(this.__ul);
 
   };
 
