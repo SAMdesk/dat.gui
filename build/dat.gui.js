@@ -1231,6 +1231,16 @@ dat.GUI = dat.gui.GUI = (function (css, styleSheet, Controller, BooleanControlle
     dom.addClass(name, 'property-name');
     name.innerHTML = controller.getName();
 
+    var info = controller.getOption('info');
+    if (info) {
+      var el = document.createElement('span');
+      dom.addClass(el, 'ui-info-badge');
+      el.setAttribute('data-tooltip-hover', '');
+      el.setAttribute('title', info);
+      el.innerHTML = '?';
+      name.appendChild(el);
+    }
+
     if (controller.getOption('editable')) {
       var toggle = document.createElement('span');
       toggle.style.float = 'right';
