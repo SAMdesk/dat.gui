@@ -115,14 +115,6 @@ function(Controller, dom, common) {
 
       {
 
-        setValue: function(v) {
-          var toReturn = OptionController.superclass.prototype.setValue.call(this, v);
-          if (this.__onFinishChange) {
-            this.__onFinishChange.call(this, this.getValue());
-          }
-          return toReturn;
-        },
-
         updateDisplay: function() {
 
           var value = this.getValue();

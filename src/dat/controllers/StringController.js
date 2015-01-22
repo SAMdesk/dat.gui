@@ -36,24 +36,20 @@ define([
     this.__input = document.createElement('input');
     this.__input.setAttribute('type', 'text');
 
-    dom.bind(this.__input, 'keyup', onChange);
-    dom.bind(this.__input, 'change', onChange);
+    if (options.placeholder) {
+      this.__input.setAttribute('placeholder', options.placeHolder);
+    }
+
     dom.bind(this.__input, 'blur', onBlur);
     dom.bind(this.__input, 'keydown', function(e) {
       if (e.keyCode === 13) {
         this.blur();
       }
     });
-    
 
-    function onChange() {
-      _this.setValue(_this.__input.value);
-    }
 
     function onBlur() {
-      if (_this.__onFinishChange) {
-        _this.__onFinishChange.call(_this, _this.getValue());
-      }
+      _this.setValue(_this.__input.value);
     }
 
     this.updateDisplay();
