@@ -37,7 +37,7 @@ define([
     this.__input.setAttribute('type', 'text');
 
     if (options.placeholder) {
-      this.__input.setAttribute('placeholder', options.placeHolder);
+      this.__input.setAttribute('placeholder', options.placeholder);
     }
 
     dom.bind(this.__input, 'blur', onBlur);
