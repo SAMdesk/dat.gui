@@ -17,7 +17,11 @@ define([
     'dat/utils/common'
 ], function(Controller, dom, common) {
 
-    var units = ['px', 'em', 'pt'];
+    var units = [
+        'px',
+        //'em',
+        'pt'
+    ];
 
     var Unit = function(value) {
 
@@ -65,6 +69,9 @@ define([
 
         var _this = this;
 
+        var UP_ARROW = 38;
+        var DOWN_ARROW = 40;
+
         this.__input = document.createElement('input');
         this.__input.setAttribute('type', 'text');
 
@@ -84,6 +91,21 @@ define([
             var value = _this.__input.value;
             if (!isNaN(value)) _this.__unit.num = value;
             _this.setValue(_this.__unit.toString());
+        });
+
+        dom.bind(this.__input, 'keydown', function(e) {
+            switch(e.keyCode) {
+                case DOWN_ARROW:
+                    e.preventDefault();
+                    _this.__unit.num--;
+                    _this.setValue(_this.__unit.toString());
+                    break;
+                case UP_ARROW:
+                    e.preventDefault();
+                    _this.__unit.num++;
+                    _this.setValue(_this.__unit.toString());
+                    break;
+            }
         });
 
         dom.bind(this.__select, 'change', function() {
