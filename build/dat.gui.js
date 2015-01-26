@@ -1563,9 +1563,16 @@ dat.controllers.ColorController = (function (Controller, dom, Color, interpret, 
     });
 
     this.__visible = false;
+    this.__firstClick = false;
     dom.bind(this.__swatch, 'click', function() {
       if (_this.getReadonly()) return;
       else _this.__visible = !_this.__visible;
+      if (_this.__visible) {
+        _this.__firstClick = true;
+        dom.bind(window, 'click', closePopup);
+      } else {
+        dom.unbind(window, 'click', closePopup);
+      }
       common.extend(_this.__selector.style, {
         display: _this.__visible ? '' : 'none'
       });
@@ -1615,6 +1622,23 @@ dat.controllers.ColorController = (function (Controller, dom, Color, interpret, 
     function unbindA() {
       dom.unbind(window, 'mousemove', setA);
       dom.unbind(window, 'mouseup', unbindA);
+    }
+
+    function closePopup(e) {
+      if (_this.__firstClick) {
+        _this.__firstClick = false;
+      } else {
+        var el = e.target;
+        while(el) {
+          if (el == _this.__selector) return;
+          else el = el.parentNode;
+        }
+        _this.__visible = false;
+        common.extend(_this.__selector.style, {
+            display: 'none'
+        });
+        dom.unbind(window, 'click', closePopup);
+      }
     }
 
     this.__saturation_field.appendChild(value_field);
@@ -1796,16 +1820,16 @@ dat.controllers.ColorController = (function (Controller, dom, Color, interpret, 
       }
 
   );
-  
+
   var vendors = ['-moz-','-o-','-webkit-','-ms-',''];
-  
+
   function linearGradient(elem, x, a, b) {
     elem.style.background = '';
     common.each(vendors, function(vendor) {
       elem.style.cssText += 'background: ' + vendor + 'linear-gradient('+x+', '+a+' 0%, ' + b + ' 100%); ';
     });
   }
-  
+
   function hueGradient(elem) {
     elem.style.background = '';
     elem.style.cssText += 'background: -moz-linear-gradient(top,  #ff0000 0%, #ff00ff 17%, #0000ff 34%, #00ffff 50%, #00ff00 67%, #ffff00 84%, #ff0000 100%);'
