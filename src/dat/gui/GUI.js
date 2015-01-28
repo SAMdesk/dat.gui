@@ -19,6 +19,7 @@ define([
   'dat/controllers/Controller',
   'dat/controllers/BooleanController',
   'dat/controllers/ColorController',
+  'dat/controllers/CustomOptionController',
   'dat/controllers/NumberController',
   'dat/controllers/OptionController',
   'dat/controllers/StringController',
@@ -27,7 +28,7 @@ define([
   'dat/dom/dom',
   'dat/utils/common'
 
-], function(css, styleSheet, Controller, BooleanController, ColorController, NumberController, OptionController, StringController, UnitController, dom, common) {
+], function(css, styleSheet, Controller, BooleanController, ColorController, CustomOptionController, NumberController, OptionController, StringController, UnitController, dom, common) {
 
   //css.inject(styleSheet);
 
