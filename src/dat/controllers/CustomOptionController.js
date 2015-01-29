@@ -55,6 +55,10 @@ define([
       this.__current_label.setAttribute('for', params.key + ':toggle');
       dom.addClass(this.__current_label, 'select-current');
 
+      this.__current_content = document.createElement('div');
+      dom.addClass(this.__current_content, 'select-content');
+      this.__current_label.appendChild(this.__current_content);
+
       var span = document.createElement('span');
       dom.addClass(span, 'button-segment');
 
@@ -97,14 +101,8 @@ define([
         dom.addClass(option_label, 'select-option');
         option_label.innerHTML = param.display;
 
-        var top_label = document.createElement('label');
-        top_label.setAttribute('for', params.key + ':option:' + i);
-        dom.addClass(top_label, 'select-top');
-        top_label.innerHTML = param.display;
-
         option.appendChild(radio);
         option.appendChild(option_label);
-        option.appendChild(top_label);
 
         _this.__dropdown.appendChild(option);
         _this.__radios.push(radio);
@@ -158,9 +156,17 @@ define([
         updateDisplay: function () {
 
           var value = this.getValue();
-          common.each(this.__radios, function(radio) {
-            radio.checked = (value == radio.getAttribute('value'));
+          var radio = null;
+          common.each(this.__radios, function(r) {
+            if (value == r.getAttribute('value')) {
+              radio = r;
+              r.checked = true;
+            } else {
+              r.checked = false;
+            }
           });
+
+          if (radio) this.__current_content.innerHTML = radio.nextSibling.innerHTML;
 
           this.__toggle.disabled = this.getReadonly();
 
