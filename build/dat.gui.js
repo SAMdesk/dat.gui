@@ -2208,17 +2208,25 @@ dat.controllers.CustomOptionController = (function (Controller, dom, common) {
       this.updateDisplay();
 
       this.__firstClick = false;
-      dom.bind(this.__toggle, 'change', function() {
-          if (this.checked) {
-            _this.__firstClick = true;
-            dom.bind(window, 'click', closeDropdown);
-          }
+      dom.bind(this.__toggle, 'click', function(e) {
+        console.log('click', e);
+        if (this.checked) {
+          console.log('click checked');
+          _this.__firstClick = true;
+          dom.bind(window, 'click', closeDropdown);
+        }
       });
 
-      function closeDropdown() {
+      dom.bind(this.__current_label, 'click', function(e) {
+        e.stopPropagation();
+      });
+
+      function closeDropdown(e) {
+        console.log('document click', e);
         if (_this.__firstClick) {
           _this.__firstClick = false;
         } else {
+          console.log('document close dropdown');
           _this.__toggle.checked = false;
           dom.unbind(window, 'click', closeDropdown);
         }

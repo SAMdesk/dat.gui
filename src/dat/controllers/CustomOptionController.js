@@ -120,14 +120,18 @@ define([
       this.updateDisplay();
 
       this.__firstClick = false;
-      dom.bind(this.__toggle, 'change', function() {
-          if (this.checked) {
-            _this.__firstClick = true;
-            dom.bind(window, 'click', closeDropdown);
-          }
+      dom.bind(this.__toggle, 'click', function(e) {
+        if (this.checked) {
+          _this.__firstClick = true;
+          dom.bind(window, 'click', closeDropdown);
+        }
       });
 
-      function closeDropdown() {
+      dom.bind(this.__current_label, 'click', function(e) {
+        e.stopPropagation();
+      });
+
+      function closeDropdown(e) {
         if (_this.__firstClick) {
           _this.__firstClick = false;
         } else {
